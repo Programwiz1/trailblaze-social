@@ -10,6 +10,7 @@ import Social from "./pages/Social";
 import DonatePage from "./pages/Donate";
 import TrailDetail from "./pages/TrailDetail";
 import NotFound from "./pages/NotFound";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/trail/:id" element={<TrailDetail />} />
             <Route path="/social" element={<Social />} />
             <Route path="/donate" element={<DonatePage />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -129,6 +129,76 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_trails: {
+        Row: {
+          created_at: string
+          id: string
+          trail_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          trail_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          trail_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_trails_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trail_completions: {
+        Row: {
+          completed_at: string
+          difficulty_rating: string | null
+          duration_minutes: number | null
+          id: string
+          rating: number | null
+          review_text: string | null
+          trail_id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          difficulty_rating?: string | null
+          duration_minutes?: number | null
+          id?: string
+          rating?: number | null
+          review_text?: string | null
+          trail_id: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          difficulty_rating?: string | null
+          duration_minutes?: number | null
+          id?: string
+          rating?: number | null
+          review_text?: string | null
+          trail_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trail_completions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
