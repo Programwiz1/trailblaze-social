@@ -11,11 +11,11 @@ interface CompletedTrail {
   trail_id: string;
   user_id: string;
   rating: number;
-  review_text: string;
+  review_text: string | null;
   difficulty_rating: "easy" | "moderate" | "hard";
-  duration_minutes: number;
+  duration_minutes: number | null;
   completed_at: string;
-  trail_details?: SavedTrail;
+  trail_details?: SavedTrail | null;
 }
 
 interface SavedTrail {
@@ -67,7 +67,9 @@ const Profile = () => {
           const savedTrail = savedTrailsData.find(st => st.trail_id === trail.trail_id);
           return {
             ...trail,
-            trail_details: savedTrail,
+            difficulty_rating: (trail.difficulty_rating || 'moderate') as "easy" | "moderate" | "hard",
+            duration_minutes: trail.duration_minutes || 0,
+            trail_details: savedTrail || null
           };
         });
 
@@ -110,13 +112,13 @@ const Profile = () => {
               {completedTrails.map((trail) => (
                 <TrailCard
                   key={trail.id}
-                  id={trail.trail_id}
-                  name={trail.trail_details?.trail_name || trail.trail_id}
+                  id={trail.trail_details?.trail_id || trail.trail_id}
+                  name={trail.trail_details?.trail_name || "Unnamed Trail"}
                   image={trail.trail_details?.trail_image || "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b"}
                   difficulty={trail.difficulty_rating}
                   rating={trail.rating}
                   distance={trail.trail_details?.trail_distance || 0}
-                  time={trail.trail_details?.trail_time || `${Math.floor(trail.duration_minutes / 60)}h ${trail.duration_minutes % 60}m`}
+                  time={trail.trail_details?.trail_time || `${Math.floor((trail.duration_minutes || 0) / 60)}h ${(trail.duration_minutes || 0) % 60}m`}
                   status="open"
                   completed={true}
                 />
