@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useLoadScript } from "@react-google-maps/api";
 import Navbar from "@/components/Navbar";
@@ -143,6 +144,7 @@ const Index = () => {
       }
 
       const data = await response.json();
+      console.log("Server response:", data); // Add this line for debugging
       setServerResponse(data);
       toast.success("Found the best locations for you!");
     } catch (error) {
@@ -153,9 +155,7 @@ const Index = () => {
     }
   };
 
-  const displayedTrails = serverResponse 
-    ? transformServerData(serverResponse)
-    : mockTrails;
+  const displayedTrails = serverResponse ? transformServerData(serverResponse) : mockTrails;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-nature-50 to-white">
