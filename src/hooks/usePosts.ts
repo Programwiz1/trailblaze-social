@@ -29,6 +29,7 @@ export const usePosts = () => {
   const [posts, setPosts] = useState<Post[]>([]);
 
   const fetchPosts = async () => {
+    // Using a left join to get profile data even if some posts don't have matching profiles
     const { data, error } = await supabase
       .from('posts')
       .select(`
@@ -40,7 +41,7 @@ export const usePosts = () => {
           user_id,
           created_at
         ),
-        profiles!inner (
+        profile:profiles (
           username,
           avatar_url
         )
@@ -53,16 +54,18 @@ export const usePosts = () => {
     }
 
     if (data) {
-      // Transform the data to match our Post interface
-      const transformedPosts = data.map(post => ({
-        ...post,
-        profile: {
-          username: post.profiles.username,
-          avatar_url: post.profiles.avatar_url
-        }
-      }));
+      // Transform and filter out posts with invalid profile data
+      const validPosts = data
+        .filter(post => post.profile && post.profile.username)
+        .map(post => ({
+          ...post,
+          profile: {
+            username: post.profile.username,
+            avatar_url: post.profile.avatar_url
+          }
+        }));
 
-      setPosts(transformedPosts as Post[]);
+      setPosts(validPosts as Post[]);
     }
   };
 
