@@ -66,7 +66,12 @@ const Profile = () => {
           .eq('user_id', user.id);
 
         if (savedData) {
-          setSavedTrails(savedData);
+          // Type assertion to ensure trail_difficulty is one of the allowed values
+          const typedSavedData = savedData.map(trail => ({
+            ...trail,
+            trail_difficulty: (trail.trail_difficulty || "moderate") as "easy" | "moderate" | "hard"
+          }));
+          setSavedTrails(typedSavedData);
         }
 
         // Fetch completed trails
