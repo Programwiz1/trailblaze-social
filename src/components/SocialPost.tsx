@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { Heart, MessageSquare, User } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/components/ui/use-toast";
+import { PostHeader } from "./social/PostHeader";
+import { PostImage } from "./social/PostImage";
+import { PostActions } from "./social/PostActions";
+import { CommentsList } from "./social/CommentsList";
+import { CommentForm } from "./social/CommentForm";
 
 interface Comment {
   id: string;
@@ -148,7 +149,6 @@ const SocialPost = ({
 
       if (error) throw error;
 
-      // Fetch the username for the new comment
       const { data: profile } = await supabase
         .from('profiles')
         .select('username')
@@ -176,65 +176,30 @@ const SocialPost = ({
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="p-4 flex items-center space-x-2">
-        <Avatar>
-          <AvatarImage src={userAvatar} />
-          <AvatarFallback>
-            <User className="w-4 h-4" />
-          </AvatarFallback>
-        </Avatar>
-        <div>
-          <p className="font-medium text-gray-900">{user}</p>
-          <p className="text-xs text-gray-500">{timestamp}</p>
-        </div>
-      </div>
-
-      <img src={image} alt="Post" className="w-full h-96 object-cover" />
-
+      <PostHeader user={user} userAvatar={userAvatar} timestamp={timestamp} />
+      <PostImage image={image} />
+      
       <div className="p-4">
-        <div className="flex items-center space-x-4 mb-4">
-          <button
-            onClick={handleLike}
-            className="flex items-center space-x-1 text-gray-600 hover:text-red-500 transition-colors"
-          >
-            <Heart className={`w-6 h-6 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
-            <span>{likesCount}</span>
-          </button>
-          <button
-            onClick={() => setShowComments(!showComments)}
-            className="flex items-center space-x-1 text-gray-600 hover:text-nature-500 transition-colors"
-          >
-            <MessageSquare className="w-6 h-6" />
-            <span>{comments.length}</span>
-          </button>
-        </div>
+        <PostActions
+          isLiked={isLiked}
+          likesCount={likesCount}
+          commentsCount={comments.length}
+          onLikeClick={handleLike}
+          onCommentClick={() => setShowComments(!showComments)}
+        />
 
         <p className="text-gray-900 mb-2">{caption}</p>
 
         {showComments && (
           <div className="mt-4 space-y-4">
-            <div className="space-y-2">
-              {comments.map((comment) => (
-                <div key={comment.id} className="flex space-x-2">
-                  <p className="font-medium">{commentUsernames[comment.user_id] || 'Unknown User'}:</p>
-                  <p className="text-gray-600">{comment.content}</p>
-                </div>
-              ))}
-            </div>
+            <CommentsList comments={comments} commentUsernames={commentUsernames} />
 
             {currentUser && (
-              <form onSubmit={handleAddComment} className="flex space-x-2">
-                <Input
-                  type="text"
-                  placeholder="Add a comment..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  className="flex-1"
-                />
-                <Button type="submit" variant="secondary">
-                  Post
-                </Button>
-              </form>
+              <CommentForm
+                newComment={newComment}
+                onCommentChange={setNewComment}
+                onSubmit={handleAddComment}
+              />
             )}
           </div>
         )}
