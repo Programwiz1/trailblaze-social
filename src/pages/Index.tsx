@@ -72,10 +72,6 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [distance, setDistance] = useState<string>("");
   const [transportMode, setTransportMode] = useState<string>("");
-  const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
-  const [minRating, setMinRating] = useState<string>("all");
-  const [maxDistance, setMaxDistance] = useState<string>("all");
-  const [timeRange, setTimeRange] = useState<string>("all");
 
   const calculateCarbonFootprint = (distance: string, mode: string) => {
     const dist = parseFloat(distance);
@@ -93,13 +89,12 @@ const Index = () => {
   };
 
   const filteredTrails = mockTrails.filter(trail => {
-    const matchesSearch = trail.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDifficulty = difficultyFilter === "all" || trail.difficulty === difficultyFilter;
-    const matchesRating = minRating === "all" || trail.rating >= parseFloat(minRating);
-    const matchesDistance = maxDistance === "all" || trail.distance <= parseFloat(maxDistance);
-    const matchesTime = timeRange === "all" || trail.time.includes(timeRange);
-
-    return matchesSearch && matchesDifficulty && matchesRating && matchesDistance && matchesTime;
+    const searchTerms = searchQuery.toLowerCase();
+    return (
+      trail.name.toLowerCase().includes(searchTerms) ||
+      trail.difficulty.toLowerCase().includes(searchTerms) ||
+      trail.time.toLowerCase().includes(searchTerms)
+    );
   });
 
   return (
@@ -122,82 +117,14 @@ const Index = () => {
             <CardTitle className="text-nature-800">Find Your Perfect Trail</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-nature-500" />
-                <Input
-                  placeholder="Search trails..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Difficulty
-                  </label>
-                  <Select onValueChange={setDifficultyFilter} value={difficultyFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Any difficulty" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Any difficulty</SelectItem>
-                      <SelectItem value="easy">Easy</SelectItem>
-                      <SelectItem value="moderate">Moderate</SelectItem>
-                      <SelectItem value="hard">Hard</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Minimum Rating
-                  </label>
-                  <Select onValueChange={setMinRating} value={minRating}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Any rating" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Any rating</SelectItem>
-                      <SelectItem value="3">3+ Stars</SelectItem>
-                      <SelectItem value="4">4+ Stars</SelectItem>
-                      <SelectItem value="4.5">4.5+ Stars</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Maximum Distance
-                  </label>
-                  <Select onValueChange={setMaxDistance} value={maxDistance}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Any distance" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Any distance</SelectItem>
-                      <SelectItem value="2">Under 2 miles</SelectItem>
-                      <SelectItem value="5">Under 5 miles</SelectItem>
-                      <SelectItem value="10">Under 10 miles</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Time Range
-                  </label>
-                  <Select onValueChange={setTimeRange} value={timeRange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Any duration" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Any duration</SelectItem>
-                      <SelectItem value="1h">Under 1 hour</SelectItem>
-                      <SelectItem value="2h">Under 2 hours</SelectItem>
-                      <SelectItem value="3h">Under 3 hours</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-nature-500" />
+              <Input
+                placeholder="Search trails by name, difficulty, or duration..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
             </div>
           </CardContent>
         </Card>
