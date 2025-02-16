@@ -1,13 +1,21 @@
+
 import { useState, useEffect } from "react";
+import { Search, Filter, Car, Bus, Trash, Footprints, AlertTriangle, Loader2 } from "lucide-react";
 import { useLoadScript } from "@react-google-maps/api";
 import Navbar from "@/components/Navbar";
 import TrailCard from "@/components/TrailCard";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import SearchTrails from "@/components/trails/SearchTrails";
-import TravelImpactCalculator from "@/components/trails/TravelImpactCalculator";
-import LeaveNoTraceTips from "@/components/trails/LeaveNoTraceTips";
-import { transformServerData } from "@/utils/trailUtils";
 
 // Mock data for initial implementation
 const mockTrails = [
@@ -46,21 +54,34 @@ const mockTrails = [
   },
 ];
 
+const leaveNoTraceTips = [
+  {
+    icon: Footprints,
+    title: "Stay on Trail",
+    description: "Protect fragile ecosystems by sticking to marked paths"
+  },
+  {
+    icon: Trash,
+    title: "Pack It Out",
+    description: "Carry all trash with you, including biodegradable waste"
+  },
+  {
+    icon: AlertTriangle,
+    title: "Respect Wildlife",
+    description: "Observe from a distance and never feed wild animals"
+  }
+];
+
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [distance, setDistance] = useState<string>("");
   const [transportMode, setTransportMode] = useState<string>("");
   const [isSearching, setIsSearching] = useState(false);
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
-  const [serverResponse, setServerResponse] = useState<Array<[string, number, number, number]> | null>(null);
+  const [serverResponse, setServerResponse] = useState<Record<string, any> | null>(null);
   const [googleMapsKey, setGoogleMapsKey] = useState<string>("");
 
-  console.log('Current serverResponse state:', serverResponse); // Debug log
-
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: googleMapsKey,
-  });
-
+  // Fetch Google Maps API key from Supabase
   useEffect(() => {
     const fetchApiKey = async () => {
       const { data, error } = await supabase
@@ -71,12 +92,10 @@ const Index = () => {
       
       if (error) {
         console.error('Error fetching Google Maps API key:', error);
-        toast.error("Error loading Google Maps API key");
         return;
       }
       
       if (data) {
-        console.log('Successfully fetched Google Maps API key'); // Debug log
         setGoogleMapsKey(data.key_value);
       } else {
         console.error('Google Maps API key not found in database');
@@ -86,6 +105,10 @@ const Index = () => {
 
     fetchApiKey();
   }, []);
+
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: googleMapsKey,
+  });
 
   const getCurrentLocation = (): Promise<GeolocationPosition> => {
     return new Promise((resolve, reject) => {
@@ -99,8 +122,9 @@ const Index = () => {
 
   const calculateCarbonFootprint = (distance: string, mode: string) => {
     const dist = parseFloat(distance);
-    if (isNaN(dist)) return "0";
+    if (isNaN(dist)) return 0;
     
+    // Rough estimates in kg CO2 per mile
     const factors = {
       car: 0.404,
       carpool: 0.202,
@@ -117,16 +141,21 @@ const Index = () => {
       return;
     }
 
+    if (!isLoaded) {
+      toast.error("Google Maps is not loaded yet");
+      return;
+    }
+
     setIsSearching(true);
     setServerResponse(null);
 
     try {
+      // Get current location
       const position = await getCurrentLocation();
       const { latitude, longitude } = position.coords;
       setCoordinates({ lat: latitude, lng: longitude });
 
-      console.log('Sending request with:', { latitude, longitude, description: searchQuery });
-
+      // Send data to server
       const response = await fetch('https://bcbf-136-159-213-22.ngrok-free.app/locations', {
         method: 'POST',
         headers: {
@@ -143,50 +172,25 @@ const Index = () => {
         throw new Error('Server response was not ok');
       }
 
-      const rawData = await response.json();
-      console.log("Raw server response:", rawData);
-
-      // Handle the case where the response is in the format { places: Array }
-      const placesData = Array.isArray(rawData) ? rawData : rawData.places;
-      
-      if (!Array.isArray(placesData)) {
-        throw new Error('Invalid response format from server');
-      }
-
-      // Transform the data into the expected format with explicit type
-      const transformedData: [string, number, number, number][] = placesData.map(place => {
-        if (Array.isArray(place) && place.length === 4) {
-          // Ensure each element has the correct type
-          const [name, weather, popularity, dist] = place;
-          return [
-            String(name),
-            Number(weather),
-            Number(popularity),
-            Number(dist)
-          ] as [string, number, number, number];
-        }
-        // If it's an object, transform it to tuple format
-        return [
-          String(place.name || ''),
-          Number(place.weather_rank || 12.6),
-          Number(place.popularity || 0.8),
-          Number(place.distance || 0)
-        ] as [string, number, number, number];
-      });
-
-      setServerResponse(transformedData);
-      toast.success("Found the best locations for you!");
+      const data = await response.json();
+      setServerResponse(data);
+      toast.success("Recommendations received!");
     } catch (error) {
       console.error('Error:', error);
       toast.error("Something went wrong while processing your request");
-      setServerResponse(null); // Reset on error
     } finally {
       setIsSearching(false);
     }
   };
 
-  const displayedTrails = serverResponse ? transformServerData(serverResponse) : mockTrails;
-  console.log('Final displayed trails:', displayedTrails);
+  const filteredTrails = mockTrails.filter(trail => {
+    const searchTerms = searchQuery.toLowerCase();
+    return (
+      trail.name.toLowerCase().includes(searchTerms) ||
+      trail.difficulty.toLowerCase().includes(searchTerms) ||
+      trail.time.toLowerCase().includes(searchTerms)
+    );
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-nature-50 to-white">
@@ -203,34 +207,156 @@ const Index = () => {
           </p>
         </div>
 
-        <SearchTrails
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          handleSearch={handleSearch}
-          isSearching={isSearching}
-          isLoaded={isLoaded}
-        />
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="text-nature-800">Find Your Perfect Trail</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-nature-500" />
+                <Input
+                  placeholder="Enter any preferences"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Button 
+                onClick={handleSearch}
+                disabled={isSearching || !searchQuery.trim() || !isLoaded}
+                className="bg-nature-600 hover:bg-nature-700"
+              >
+                {isSearching ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processing...
+                  </div>
+                ) : (
+                  "Find Trails"
+                )}
+              </Button>
+            </div>
 
-        <TravelImpactCalculator
-          distance={distance}
-          setDistance={setDistance}
-          transportMode={transportMode}
-          setTransportMode={setTransportMode}
-          calculateCarbonFootprint={calculateCarbonFootprint}
-        />
+            {isSearching && (
+              <div className="mt-4 p-4 bg-nature-50 rounded-lg">
+                <div className="flex items-center justify-center gap-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-nature-600" />
+                  <p className="text-nature-600">Searching for trails near you...</p>
+                </div>
+              </div>
+            )}
 
-        <LeaveNoTraceTips />
+            {serverResponse && !isSearching && (
+              <div className="mt-4 p-4 bg-white rounded-lg border border-nature-200">
+                <h3 className="font-semibold mb-2 text-nature-800">Server Response:</h3>
+                <div className="space-y-2">
+                  {Object.entries(serverResponse).map(([key, value]) => (
+                    <div key={key} className="flex gap-2">
+                      <span className="font-medium text-nature-600">{key}:</span>
+                      <span className="text-nature-800">
+                        {typeof value === 'object' ? JSON.stringify(value) : value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8 bg-gradient-to-r from-nature-50 to-white border-nature-200">
+          <CardHeader>
+            <CardTitle className="text-nature-800">Travel Impact Calculator</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Distance to Trail (miles)
+                </label>
+                <input
+                  type="number"
+                  value={distance}
+                  onChange={(e) => setDistance(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="Enter distance"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Transportation Mode
+                </label>
+                <Select onValueChange={setTransportMode} value={transportMode}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select transport" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="car">
+                      <span className="flex items-center">
+                        <Car className="w-4 h-4 mr-2" />
+                        Drive Alone
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="carpool">
+                      <span className="flex items-center">
+                        <Car className="w-4 h-4 mr-2" />
+                        Carpool
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="bus">
+                      <span className="flex items-center">
+                        <Bus className="w-4 h-4 mr-2" />
+                        Public Transit
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-end">
+                <div className="w-full">
+                  <div className="text-sm font-medium text-gray-700 mb-1">
+                    Carbon Footprint
+                  </div>
+                  <div className="bg-gray-100 p-2 rounded-md">
+                    {distance && transportMode ? (
+                      <span className="text-lg font-semibold">
+                        {calculateCarbonFootprint(distance, transportMode)} kg CO2
+                      </span>
+                    ) : (
+                      <span className="text-gray-500">
+                        Enter details to calculate
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {leaveNoTraceTips.map((tip) => (
+            <Card key={tip.title} className="bg-nature-50 border-nature-200">
+              <CardContent className="pt-6">
+                <div className="flex items-start space-x-4">
+                  <div className="p-2 bg-nature-100 rounded-lg">
+                    <tip.icon className="w-6 h-6 text-nature-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-nature-800">{tip.title}</h3>
+                    <p className="text-nature-600 text-sm">{tip.description}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayedTrails && displayedTrails.length > 0 ? (
-            displayedTrails.map((trail) => (
-              <TrailCard key={trail.id} {...trail} />
-            ))
-          ) : (
-            <div className="col-span-full text-center py-8 text-gray-500">
-              No trails found. Try searching for trails near you!
-            </div>
-          )}
+          {filteredTrails.map((trail) => (
+            <TrailCard key={trail.id} {...trail} />
+          ))}
         </div>
       </main>
     </div>

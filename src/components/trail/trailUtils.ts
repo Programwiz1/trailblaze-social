@@ -1,31 +1,24 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { validate as validateUUID } from 'uuid';
 
 export const getTrailUUID = (id: string) => {
-  // Check if the ID is a valid UUID
-  return validateUUID(id) ? id : null;
+  return id.includes('-') ? id : '00000000-0000-0000-0000-' + id.padStart(12, '0');
 };
 
 export const checkTrailStatus = async (trailId: string, userId: string) => {
-  // Always return default values for invalid UUIDs
-  if (!validateUUID(trailId)) {
-    return {
-      isSaved: false,
-      isCompleted: false
-    };
-  }
+  const trailUUID = getTrailUUID(trailId);
 
   const [{ data: savedData }, { data: completionData }] = await Promise.all([
     supabase
       .from('saved_trails')
       .select('id')
-      .eq('trail_id', trailId)
+      .eq('trail_id', trailUUID)
       .eq('user_id', userId)
       .maybeSingle(),
     supabase
       .from('trail_completions')
       .select('id')
-      .eq('trail_id', trailId)
+      .eq('trail_id', trailUUID)
       .eq('user_id', userId)
       .maybeSingle()
   ]);
@@ -49,9 +42,6 @@ export const saveTrail = async (
   }
 ) => {
   const trailUUID = getTrailUUID(trailId);
-  if (!trailUUID) {
-    throw new Error('Invalid trail ID format');
-  }
   
   const { error } = await supabase
     .from('saved_trails')
@@ -71,9 +61,6 @@ export const saveTrail = async (
 
 export const unsaveTrail = async (trailId: string, userId: string) => {
   const trailUUID = getTrailUUID(trailId);
-  if (!trailUUID) {
-    throw new Error('Invalid trail ID format');
-  }
   
   const { error } = await supabase
     .from('saved_trails')
@@ -103,10 +90,8 @@ export const completeTrail = async (
   }
 ) => {
   const trailUUID = getTrailUUID(trailId);
-  if (!trailUUID) {
-    throw new Error('Invalid trail ID format');
-  }
 
+  // Insert completion without automatically saving the trail
   const { error: completionError } = await supabase
     .from('trail_completions')
     .insert([{
@@ -128,9 +113,6 @@ export const completeTrail = async (
 
 export const uncompleteTrail = async (trailId: string, userId: string) => {
   const trailUUID = getTrailUUID(trailId);
-  if (!trailUUID) {
-    throw new Error('Invalid trail ID format');
-  }
 
   const { error } = await supabase
     .from('trail_completions')

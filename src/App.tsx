@@ -11,39 +11,28 @@ import DonatePage from "./pages/Donate";
 import TrailDetail from "./pages/TrailDetail";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
-import { useState } from "react";
 
-const App = () => {
-  // Create a new QueryClient instance for each app instance
-  const [queryClient] = useState(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        retry: 1,
-      },
-    },
-  }));
+const queryClient = new QueryClient();
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/trail/:id" element={<TrailDetail />} />
-              <Route path="/social" element={<Social />} />
-              <Route path="/donate" element={<DonatePage />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
-};
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/trail/:id" element={<TrailDetail />} />
+            <Route path="/social" element={<Social />} />
+            <Route path="/donate" element={<DonatePage />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
+  </QueryClientProvider>
+);
 
 export default App;
