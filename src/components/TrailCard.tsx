@@ -1,3 +1,4 @@
+
 import { Star, Timer, ArrowUpRight, Bookmark, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -66,7 +67,7 @@ const TrailCard = ({
         .select('id')
         .eq('trail_id', trailUUID)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       setIsSaved(!!data);
     };
@@ -136,7 +137,7 @@ const TrailCard = ({
           .select('id')
           .eq('trail_id', trailUUID)
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (existingData) {
           toast({
