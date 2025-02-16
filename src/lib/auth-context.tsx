@@ -2,9 +2,11 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
+// Initialize Supabase client with empty strings as default values
+// The actual values will be provided by the Lovable platform
 const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
+  "https://your-project.supabase.co",  // This will be replaced by the actual URL
+  "your-anon-key"  // This will be replaced by the actual key
 );
 
 interface User {
