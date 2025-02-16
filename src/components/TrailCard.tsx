@@ -148,11 +148,20 @@ const TrailCard = ({
           return;
         }
 
-        // Save the trail
+        // Save the trail with all details
         const { error } = await supabase
           .from('saved_trails')
           .insert([
-            { trail_id: trailUUID, user_id: user.id }
+            { 
+              trail_id: trailUUID, 
+              user_id: user.id,
+              trail_name: name,
+              trail_image: image,
+              trail_difficulty: difficulty,
+              trail_rating: rating,
+              trail_distance: distance,
+              trail_time: time
+            }
           ]);
 
         if (error) throw error;

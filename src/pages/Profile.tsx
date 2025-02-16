@@ -12,6 +12,12 @@ interface SavedTrail {
   id: string;
   trail_id: string;
   created_at: string;
+  trail_name: string;
+  trail_image: string;
+  trail_difficulty: "easy" | "moderate" | "hard";
+  trail_rating: number;
+  trail_distance: number;
+  trail_time: string;
 }
 
 interface CompletedTrail {
@@ -20,7 +26,7 @@ interface CompletedTrail {
   completed_at: string;
   rating: number;
   review_text: string | null;
-  difficulty_rating: "easy" | "moderate" | "hard" | null;  // Made nullable since DB allows null
+  difficulty_rating: "easy" | "moderate" | "hard" | null;
   duration_minutes: number;
 }
 
@@ -53,18 +59,14 @@ const Profile = () => {
           setProfile(profileData);
         }
 
-        // Fetch saved trails
+        // Fetch saved trails with all trail details
         const { data: savedData } = await supabase
           .from('saved_trails')
           .select('*')
           .eq('user_id', user.id);
 
         if (savedData) {
-          setSavedTrails(savedData.map(trail => ({
-            ...trail,
-            trail_id: trail.trail_id.includes('-') ? trail.trail_id : 
-              '00000000-0000-0000-0000-' + trail.trail_id.padStart(12, '0')
-          })));
+          setSavedTrails(savedData);
         }
 
         // Fetch completed trails
@@ -146,7 +148,7 @@ const Profile = () => {
                   name={`Trail ${trail.trail_id}`}
                   image="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b"
                   difficulty={trail.difficulty_rating || "moderate"}
-                  rating={trail.rating}
+                  rating={trail.rating || 0}
                   distance={2.5}
                   time={`${Math.floor(trail.duration_minutes / 60)}h ${trail.duration_minutes % 60}m`}
                 />
@@ -160,12 +162,12 @@ const Profile = () => {
                 <TrailCard
                   key={trail.id}
                   id={trail.trail_id}
-                  name={`Trail ${trail.trail_id}`}
-                  image="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b"
-                  difficulty="moderate"
-                  rating={4.5}
-                  distance={2.5}
-                  time="2h 30m"
+                  name={trail.trail_name}
+                  image={trail.trail_image}
+                  difficulty={trail.trail_difficulty}
+                  rating={trail.trail_rating}
+                  distance={trail.trail_distance}
+                  time={trail.trail_time}
                 />
               ))}
             </div>

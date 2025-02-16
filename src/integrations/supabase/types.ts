@@ -133,19 +133,37 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          trail_difficulty: string | null
+          trail_distance: number | null
           trail_id: string
+          trail_image: string | null
+          trail_name: string | null
+          trail_rating: number | null
+          trail_time: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          trail_difficulty?: string | null
+          trail_distance?: number | null
           trail_id: string
+          trail_image?: string | null
+          trail_name?: string | null
+          trail_rating?: number | null
+          trail_time?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          trail_difficulty?: string | null
+          trail_distance?: number | null
           trail_id?: string
+          trail_image?: string | null
+          trail_name?: string | null
+          trail_rating?: number | null
+          trail_time?: string | null
           user_id?: string
         }
         Relationships: [
