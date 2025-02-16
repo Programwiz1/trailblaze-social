@@ -2,9 +2,9 @@
 import { v4 as uuidv4 } from 'uuid';
 
 export const getWeatherIcon = (rank: number) => {
-  if (rank >= 8) return "Excellent";
-  if (rank >= 6) return "Good";
-  if (rank >= 4) return "Fair";
+  if (rank >= 12) return "Excellent"; // Updated thresholds based on server weather ratings (0-100)
+  if (rank >= 8) return "Good";
+  if (rank >= 5) return "Fair";
   return "Poor";
 };
 
@@ -22,10 +22,16 @@ export const formatDistance = (distance: number): string => {
   return `${hours}h ${minutes}m`;
 };
 
-type LocationTuple = [string, number, number, number];
+interface ServerResponse {
+  client_location: {
+    latitude: number;
+    longitude: number;
+  };
+  places: [string, number, number, number][];
+}
 
-export const transformServerData = (data: LocationTuple[] | null) => {
-  if (!data || !Array.isArray(data)) {
+export const transformServerData = (data: ServerResponse | null) => {
+  if (!data || !data.places || !Array.isArray(data.places)) {
     console.warn('Invalid or missing data received from server');
     return [];
   }
@@ -48,9 +54,12 @@ export const transformServerData = (data: LocationTuple[] | null) => {
     "1526772662000-3f88f10405ff"
   ];
 
-  return data.map(([name, weatherRank, popularityRank, distanceValue]) => {
+  return data.places.map(([name, weatherRank, popularityRank, distanceValue]) => {
     const nameBuffer = Buffer.from(name);
     const id = uuidv4({ random: nameBuffer });
+
+    // Weather rank is 0-100 from the server's weather API
+    const normalizedWeatherRank = weatherRank / 10; // Convert to 0-10 scale
 
     return {
       id,
@@ -60,8 +69,8 @@ export const transformServerData = (data: LocationTuple[] | null) => {
       rating: Math.min(5, popularityRank * 5),
       distance: Number(distanceValue.toFixed(1)),
       time: formatDistance(distanceValue),
-      status: weatherRank >= 10 ? "open" : weatherRank >= 8 ? "warning" : "closed",
-      alert: weatherRank < 10 ? `Weather conditions: ${getWeatherIcon(weatherRank)}` : null
+      status: normalizedWeatherRank >= 10 ? "open" : normalizedWeatherRank >= 8 ? "warning" : "closed",
+      alert: normalizedWeatherRank < 10 ? `Weather conditions: ${getWeatherIcon(weatherRank)}` : null
     };
   });
 };
