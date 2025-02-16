@@ -90,12 +90,23 @@ export const ProfileEditDialog = () => {
 
     try {
       setIsUploading(true);
-      
-      // Upload image
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${user.id}/${Math.random()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
+      // Delete existing profile picture if any
+      if (profile?.avatar_url) {
+        const existingPath = profile.avatar_url.split('/').pop();
+        if (existingPath) {
+          await supabase.storage
+            .from('profile-pictures')
+            .remove([`${user.id}/${existingPath}`]);
+        }
+      }
+      
+      // Upload new image
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      const { error: uploadError, data } = await supabase.storage
         .from('profile-pictures')
         .upload(filePath, file);
 
@@ -114,16 +125,13 @@ export const ProfileEditDialog = () => {
 
       if (updateError) throw updateError;
 
-      // Update local state
-      setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
-
-      // Force reload the page to update the avatar everywhere
-      window.location.reload();
-
       toast({
         title: "Success",
         description: "Profile picture updated successfully!",
       });
+
+      // Update local state
+      setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
     } catch (error) {
       console.error('Error uploading profile picture:', error);
       toast({
