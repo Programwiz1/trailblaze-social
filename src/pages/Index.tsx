@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Search, Filter, Car, Bus, Trash, Footprints, AlertTriangle, Loader2 } from "lucide-react";
 import { useLoadScript } from "@react-google-maps/api";
@@ -87,14 +88,19 @@ const Index = () => {
         .from('api_keys')
         .select('key_value')
         .eq('key_name', 'GOOGLE_MAPS_API_KEY')
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error fetching Google Maps API key:', error);
         return;
       }
       
-      setGoogleMapsKey(data.key_value);
+      if (data) {
+        setGoogleMapsKey(data.key_value);
+      } else {
+        console.error('Google Maps API key not found in database');
+        toast.error("Unable to load Google Maps");
+      }
     };
 
     fetchApiKey();
@@ -132,6 +138,11 @@ const Index = () => {
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       toast.error("Please enter your preferences first");
+      return;
+    }
+
+    if (!isLoaded) {
+      toast.error("Google Maps is not loaded yet");
       return;
     }
 
