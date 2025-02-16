@@ -15,7 +15,11 @@ interface CompletedTrail {
   difficulty_rating: "easy" | "moderate" | "hard";
   duration_minutes: number | null;
   completed_at: string;
-  trail_details?: SavedTrail | null;
+  trail_name: string;
+  trail_image: string;
+  trail_difficulty: "easy" | "moderate" | "hard";
+  trail_distance: number;
+  trail_time: string;
 }
 
 interface SavedTrail {
@@ -42,7 +46,7 @@ const Profile = () => {
       if (!user) return;
 
       try {
-        // First fetch saved trails to have the reference data
+        // Fetch saved trails
         const { data: savedData, error: savedError } = await supabase
           .from('saved_trails')
           .select('*')
@@ -50,10 +54,9 @@ const Profile = () => {
           .order('created_at', { ascending: false });
 
         if (savedError) throw savedError;
-        const savedTrailsData = savedData as SavedTrail[] || [];
-        setSavedTrails(savedTrailsData);
+        setSavedTrails(savedData || []);
 
-        // Then fetch completed trails
+        // Fetch completed trails
         const { data: completedData, error: completedError } = await supabase
           .from('trail_completions')
           .select('*')
@@ -61,19 +64,7 @@ const Profile = () => {
           .order('completed_at', { ascending: false });
 
         if (completedError) throw completedError;
-        
-        // Map the completed trails with their saved trail details
-        const completedWithDetails = (completedData || []).map(trail => {
-          const savedTrail = savedTrailsData.find(st => st.trail_id === trail.trail_id);
-          return {
-            ...trail,
-            difficulty_rating: (trail.difficulty_rating || 'moderate') as "easy" | "moderate" | "hard",
-            duration_minutes: trail.duration_minutes || 0,
-            trail_details: savedTrail || null
-          };
-        });
-
-        setCompletedTrails(completedWithDetails);
+        setCompletedTrails(completedData || []);
       } catch (error) {
         console.error('Error fetching trails:', error);
       } finally {
@@ -112,13 +103,13 @@ const Profile = () => {
               {completedTrails.map((trail) => (
                 <TrailCard
                   key={trail.id}
-                  id={trail.trail_details?.trail_id || trail.trail_id}
-                  name={trail.trail_details?.trail_name || "Unnamed Trail"}
-                  image={trail.trail_details?.trail_image || "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b"}
+                  id={trail.trail_id}
+                  name={trail.trail_name}
+                  image={trail.trail_image}
                   difficulty={trail.difficulty_rating}
                   rating={trail.rating}
-                  distance={trail.trail_details?.trail_distance || 0}
-                  time={trail.trail_details?.trail_time || `${Math.floor((trail.duration_minutes || 0) / 60)}h ${(trail.duration_minutes || 0) % 60}m`}
+                  distance={trail.trail_distance}
+                  time={trail.trail_time}
                   status="open"
                   completed={true}
                 />
