@@ -35,7 +35,7 @@ interface SocialPostProps {
   timestamp: string;
   type?: "trail" | "species";
   speciesData?: SpeciesData;
-  userId: string; // Add userId prop
+  userId: string;
 }
 
 const SocialPost = ({
@@ -49,7 +49,7 @@ const SocialPost = ({
   timestamp,
   type = "trail",
   speciesData,
-  userId, // Add userId parameter
+  userId,
 }: SocialPostProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(initialLikes);
@@ -58,7 +58,7 @@ const SocialPost = ({
   const [showComments, setShowComments] = useState(false);
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
-  const [commentUsernames, setCommentUsernames] = useState<Record<string, string>>({});
+  const [commentUsernames, setCommentUsernames] = useState<Record<string, { username: string; first_name?: string | null; last_name?: string | null; }>>({});
   const [userProfile, setUserProfile] = useState<{ first_name?: string; last_name?: string } | null>(null);
 
   useEffect(() => {
@@ -101,13 +101,17 @@ const SocialPost = ({
       const userIds = comments.map(comment => comment.user_id);
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, username')
+        .select('id, username, first_name, last_name')
         .in('id', userIds);
 
       if (profiles) {
         const usernameMap = profiles.reduce((acc, profile) => ({
           ...acc,
-          [profile.id]: profile.username
+          [profile.id]: {
+            username: profile.username,
+            first_name: profile.first_name,
+            last_name: profile.last_name
+          }
         }), {});
         setCommentUsernames(usernameMap);
       }
@@ -170,14 +174,18 @@ const SocialPost = ({
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('username')
+        .select('username, first_name, last_name')
         .eq('id', currentUser.id)
-        .maybeSingle();
+        .single();
 
       if (profile) {
         setCommentUsernames(prev => ({
           ...prev,
-          [currentUser.id]: profile.username
+          [currentUser.id]: {
+            username: profile.username,
+            first_name: profile.first_name,
+            last_name: profile.last_name
+          }
         }));
       }
 

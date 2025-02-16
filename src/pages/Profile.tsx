@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TrailCard from "@/components/TrailCard";
 import { Loader2 } from "lucide-react";
+import { ProfileEditDialog } from "@/components/ProfileEditDialog";
 
 interface SavedTrail {
   id: string;
@@ -34,6 +34,8 @@ interface UserProfile {
   username: string;
   avatar_url: string | null;
   created_at: string;
+  first_name?: string | null;
+  last_name?: string | null;
 }
 
 const Profile = () => {
@@ -51,7 +53,7 @@ const Profile = () => {
         // Fetch profile data
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('username, avatar_url, created_at')
+          .select('username, avatar_url, created_at, first_name, last_name')
           .eq('id', user.id)
           .single();
 
@@ -126,15 +128,22 @@ const Profile = () => {
       <Navbar />
       <div className="container mx-auto px-4 pt-24 max-w-4xl">
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex items-center space-x-4">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback>{profile?.username?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{profile?.username || user.email}</h1>
-              <p className="text-gray-500">Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A'}</p>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-4">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src={profile?.avatar_url || undefined} />
+                <AvatarFallback>{profile?.username?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {profile?.first_name && profile?.last_name 
+                    ? `${profile.first_name} ${profile.last_name}`
+                    : profile?.username || user.email}
+                </h1>
+                <p className="text-gray-500">Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A'}</p>
+              </div>
             </div>
+            <ProfileEditDialog />
           </div>
         </div>
 
