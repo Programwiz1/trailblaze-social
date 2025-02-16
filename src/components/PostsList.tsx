@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import SocialPost from "./SocialPost";
@@ -11,17 +10,16 @@ interface Post {
   created_at: string;
   type: string;
   species_data: any;
-}
-
-interface PostWithUserDetails extends Post {
   profiles: {
     username: string;
     avatar_url: string | null;
+    first_name: string | null;
+    last_name: string | null;
   };
 }
 
 interface PostsListProps {
-  posts: PostWithUserDetails[];
+  posts: Post[];
 }
 
 export const PostsList = ({ posts }: PostsListProps) => {
@@ -84,8 +82,8 @@ export const PostsList = ({ posts }: PostsListProps) => {
           key={post.id}
           id={post.id}
           userId={post.user_id}
-          user={post.profiles.username}
-          userAvatar={post.profiles.avatar_url || undefined}
+          user={post.profiles?.username || "Unknown User"}
+          userAvatar={post.profiles?.avatar_url || undefined}
           image={post.image_url}
           caption={post.caption || ""}
           likes={likesCount[post.id] || 0}
