@@ -1,28 +1,17 @@
 import { useState } from "react";
-import { Camera, Loader2, PlusCircle, TreePine, Bird, Calendar, Leaf, ExternalLink, MapPin } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import SocialPost from "@/components/SocialPost";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { pipeline } from "@huggingface/transformers";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { SpeciesReportDialog } from "@/components/SpeciesReportDialog";
+import { EcoFactsSection } from "@/components/EcoFactsSection";
+import { ConservationEventsSection } from "@/components/ConservationEventsSection";
 
 // Mock IUCN data for demonstration
 const iucnData: Record<string, { status: string; description: string; color: string }> = {
@@ -42,45 +31,6 @@ const iucnData: Record<string, { status: string; description: string; color: str
     color: "bg-red-100"
   }
 };
-
-const ecoFacts = [
-  {
-    title: "Climate Impact on Local Birds",
-    description: "Rising temperatures are causing earlier spring migrations, affecting breeding patterns of local songbirds.",
-    icon: Bird
-  },
-  {
-    title: "Forest Ecosystem Changes",
-    description: "Warmer winters are allowing pine beetles to survive longer, threatening our conifer forests.",
-    icon: TreePine
-  },
-  {
-    title: "Native Plant Adaptations",
-    description: "Local wildflowers are blooming an average of 7 days earlier than they did 50 years ago.",
-    icon: Leaf
-  }
-];
-
-const conservationEvents = [
-  {
-    title: "Wildlife Photography Workshop",
-    date: "Next Saturday, 10 AM",
-    location: "Visitor Center",
-    description: "Learn how to photograph wildlife responsibly with professional nature photographer Sarah Johnson."
-  },
-  {
-    title: "Native Plant Restoration",
-    date: "Sunday, May 15, 9 AM",
-    location: "East Ridge Trail",
-    description: "Help us restore native plant species along the trail. Tools and guidance provided."
-  },
-  {
-    title: "Bird Migration Webinar",
-    date: "Thursday, 7 PM",
-    location: "Online",
-    description: "Join our expert panel discussing the impact of climate change on bird migration patterns."
-  }
-];
 
 const mockPosts = [
   {
@@ -261,142 +211,18 @@ const Social = () => {
                 Report Species Sighting
               </Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Report Wildlife Sighting</DialogTitle>
-                <DialogDescription>
-                  Help us track and protect local wildlife by reporting your sightings.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <form onSubmit={handleSubmitReport} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Photo</Label>
-                  <div className="border-2 border-dashed rounded-lg p-4 text-center">
-                    {speciesReport.image ? (
-                      <div className="relative">
-                        <img
-                          src={URL.createObjectURL(speciesReport.image)}
-                          alt="Species preview"
-                          className="max-h-48 mx-auto rounded"
-                        />
-                        {speciesReport.identifiedSpecies && (
-                          <div className={`mt-2 p-3 rounded-lg ${speciesReport.conservationStatus?.color || 'bg-gray-100'}`}>
-                            <div className="text-sm font-medium">
-                              Identified as: {speciesReport.identifiedSpecies}
-                              <br />
-                              Confidence: {(speciesReport.confidence! * 100).toFixed(1)}%
-                            </div>
-                            {speciesReport.conservationStatus && (
-                              <div className="mt-2 text-sm">
-                                <div className="font-medium">Conservation Status: {speciesReport.conservationStatus.status}</div>
-                                <div className="text-gray-600">{speciesReport.conservationStatus.description}</div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-gray-500">
-                        <Camera className="w-8 h-8 mx-auto mb-2" />
-                        <p>Upload a photo for AI identification</p>
-                      </div>
-                    )}
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="mt-2"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Location</Label>
-                  <Input
-                    placeholder="e.g., North Ridge Trail, mile marker 3"
-                    value={speciesReport.location}
-                    onChange={e => setSpeciesReport(prev => ({ ...prev, location: e.target.value }))}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Notes</Label>
-                  <Textarea
-                    placeholder="Add any additional observations..."
-                    value={speciesReport.notes}
-                    onChange={e => setSpeciesReport(prev => ({ ...prev, notes: e.target.value }))}
-                  />
-                </div>
-
-                <Button type="submit" className="w-full" disabled={isIdentifying}>
-                  {isIdentifying ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Identifying Species...
-                    </>
-                  ) : (
-                    "Submit Report"
-                  )}
-                </Button>
-              </form>
-            </DialogContent>
+            <SpeciesReportDialog
+              speciesReport={speciesReport}
+              isIdentifying={isIdentifying}
+              onImageUpload={handleImageUpload}
+              onSubmit={handleSubmitReport}
+              onLocationChange={(value) => setSpeciesReport(prev => ({ ...prev, location: value }))}
+              onNotesChange={(value) => setSpeciesReport(prev => ({ ...prev, notes: value }))}
+            />
           </Dialog>
           
-          {/* Eco Facts Section */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Today's Eco Facts</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {ecoFacts.map((fact, index) => (
-                <Card key={index} className="bg-green-50">
-                  <CardHeader className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <fact.icon className="w-5 h-5 text-green-600" />
-                      <CardTitle className="text-lg text-green-800">{fact.title}</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-green-700">{fact.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Conservation Events Section */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Conservation Events</h2>
-            <div className="space-y-4">
-              {conservationEvents.map((event, index) => (
-                <Card key={index} className="text-left">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">{event.title}</CardTitle>
-                        <CardDescription>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <Calendar className="w-4 h-4 text-gray-500" />
-                            <span>{event.date}</span>
-                          </div>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <MapPin className="w-4 h-4 text-gray-500" />
-                            <span>{event.location}</span>
-                          </div>
-                        </CardDescription>
-                      </div>
-                      <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
-                        <ExternalLink className="w-4 h-4 mr-1" />
-                        Register
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600">{event.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+          <EcoFactsSection />
+          <ConservationEventsSection />
         </div>
 
         <div className="space-y-6">
