@@ -52,24 +52,7 @@ export const transformServerData = (data: LocationTuple[] | null) => {
 
   try {
     const transformed = data.map((item) => {
-      let name: string, weatherRank: number, popularityRank: number, distanceValue: number;
-
-      if (Array.isArray(item) && item.length === 4) {
-        [name, weatherRank, popularityRank, distanceValue] = item;
-      } else if (typeof item === 'string') {
-        const tupleMatch = item.match(/\('([^']+)',\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\)/);
-        if (!tupleMatch) {
-          console.warn('Invalid tuple format:', item);
-          return null;
-        }
-        name = tupleMatch[1];
-        weatherRank = parseFloat(tupleMatch[2]);
-        popularityRank = parseFloat(tupleMatch[3]);
-        distanceValue = parseFloat(tupleMatch[4]);
-      } else {
-        console.warn('Invalid item format:', item);
-        return null;
-      }
+      const [name, weatherRank, popularityRank, distanceValue] = item;
 
       if (!name || typeof weatherRank !== 'number' || typeof popularityRank !== 'number' || typeof distanceValue !== 'number') {
         console.warn('Invalid data values:', { name, weatherRank, popularityRank, distanceValue });
