@@ -66,7 +66,7 @@ const SocialPost = ({
       .select('id')
       .eq('post_id', id)
       .eq('user_id', currentUser.id)
-      .single();
+      .maybeSingle();
 
     setIsLiked(!!data);
   };
