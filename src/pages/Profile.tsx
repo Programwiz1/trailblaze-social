@@ -180,12 +180,14 @@ const Profile = () => {
                 <TrailCard
                   key={trail.id}
                   id={trail.trail_id}
-                  name={`Trail ${trail.trail_id}`}
+                  name={`Mountain Vista Trail`} // Changed from Trail ${trail.trail_id}
                   image="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b"
                   difficulty={trail.difficulty_rating || "moderate"}
                   rating={trail.rating || 0}
                   distance={2.5}
                   time={`${Math.floor(trail.duration_minutes / 60)}h ${trail.duration_minutes % 60}m`}
+                  status="open"
+                  completed={true}
                 />
               ))}
             </div>
@@ -197,12 +199,13 @@ const Profile = () => {
                 <TrailCard
                   key={trail.id}
                   id={trail.trail_id}
-                  name={trail.trail_name}
+                  name={trail.trail_name || "Mountain Vista Trail"} // Added fallback name
                   image={trail.trail_image}
                   difficulty={trail.trail_difficulty}
                   rating={trail.trail_rating}
                   distance={trail.trail_distance}
                   time={trail.trail_time}
+                  status="open"
                 />
               ))}
             </div>

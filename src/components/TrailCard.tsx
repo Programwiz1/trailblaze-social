@@ -1,4 +1,3 @@
-
 import { Star, Timer, ArrowUpRight, Bookmark, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -32,6 +31,7 @@ interface TrailCardProps {
   time: string;
   status?: "open" | "warning" | "closed";
   alert?: string | null;
+  completed?: boolean;
 }
 
 const TrailCard = ({ 
@@ -43,7 +43,8 @@ const TrailCard = ({
   distance, 
   time,
   status = "open",
-  alert
+  alert,
+  completed = false
 }: TrailCardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -197,7 +198,7 @@ const TrailCard = ({
       const trailUUID = id.includes('-') ? id : 
         '00000000-0000-0000-0000-' + id.padStart(12, '0');
 
-      await supabase
+      const { error } = await supabase
         .from('trail_completions')
         .insert([
           {
@@ -209,12 +210,17 @@ const TrailCard = ({
             duration_minutes: durationMinutes
           }
         ]);
-      setIsCompleted(true);
+
+      if (error) throw error;
+
       setIsCompleteDialogOpen(false);
       toast({
         title: "Trail completed!",
         description: "Your completion and review have been saved",
       });
+
+      // Refresh the page to show the updated completion status
+      window.location.reload();
     } catch (error) {
       console.error('Error completing trail:', error);
       toast({
@@ -291,10 +297,11 @@ const TrailCard = ({
               <Button
                 variant="outline"
                 size="sm"
-                className={isCompleted ? "bg-green-50 text-green-600" : ""}
+                className={completed ? "bg-green-50 text-green-600" : ""}
+                disabled={completed}
               >
-                <CheckCircle className={`h-4 w-4 mr-2 ${isCompleted ? "fill-current" : ""}`} />
-                {isCompleted ? "Completed" : "Mark as Complete"}
+                <CheckCircle className={`h-4 w-4 mr-2 ${completed ? "fill-current" : ""}`} />
+                {completed ? "Completed" : "Mark as Complete"}
               </Button>
             </DialogTrigger>
             <DialogContent>
