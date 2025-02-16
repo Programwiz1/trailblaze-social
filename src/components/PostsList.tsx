@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import SocialPost from "./SocialPost";
@@ -75,24 +76,29 @@ export const PostsList = ({ posts }: PostsListProps) => {
     );
   }
 
+  console.log('Rendering posts:', posts); // Debug log
+
   return (
     <div className="space-y-6">
-      {posts.map((post) => (
-        <SocialPost
-          key={post.id}
-          id={post.id}
-          userId={post.user_id}
-          user={post.profiles?.username || "Unknown User"}
-          userAvatar={post.profiles?.avatar_url || undefined}
-          image={post.image_url}
-          caption={post.caption || ""}
-          likes={likesCount[post.id] || 0}
-          comments={commentsCount[post.id] || []}
-          timestamp={new Date(post.created_at).toLocaleString()}
-          type={post.type as "trail" | "species"}
-          speciesData={post.species_data}
-        />
-      ))}
+      {posts.map((post) => {
+        console.log('Rendering post:', post); // Debug log for each post
+        return (
+          <SocialPost
+            key={post.id}
+            id={post.id}
+            userId={post.user_id}
+            user={post.profiles?.username || "Unknown User"}
+            userAvatar={post.profiles?.avatar_url || undefined}
+            image={post.image_url}
+            caption={post.caption || ""}
+            likes={likesCount[post.id] || 0}
+            comments={commentsCount[post.id] || []}
+            timestamp={new Date(post.created_at).toLocaleString()}
+            type={post.type as "trail" | "species"}
+            speciesData={post.species_data}
+          />
+        );
+      })}
     </div>
   );
 };

@@ -22,7 +22,9 @@ export const usePosts = () => {
   const [posts, setPosts] = useState<Post[]>([]);
 
   const fetchPosts = async () => {
-    const { data, error } = await supabase
+    console.log('Fetching posts...');
+    
+    const { data: postsData, error: postsError } = await supabase
       .from('posts')
       .select(`
         *,
@@ -35,16 +37,46 @@ export const usePosts = () => {
       `)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching posts:', error);
+    if (postsError) {
+      console.error('Error fetching posts:', postsError);
       return;
     }
 
-    setPosts(data || []);
+    console.log('Posts data received:', postsData);
+
+    // Ensure each post has a valid profiles object
+    const sanitizedPosts = postsData?.map(post => ({
+      ...post,
+      profiles: post.profiles || {
+        username: 'Unknown User',
+        avatar_url: null,
+        first_name: null,
+        last_name: null
+      }
+    })) || [];
+
+    console.log('Sanitized posts:', sanitizedPosts);
+    setPosts(sanitizedPosts);
   };
 
   useEffect(() => {
     fetchPosts();
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('public:posts')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'posts'
+      }, () => {
+        fetchPosts();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return {
