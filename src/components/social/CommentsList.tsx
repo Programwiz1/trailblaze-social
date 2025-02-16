@@ -16,7 +16,7 @@ export const CommentsList = ({ comments, commentUsernames }: CommentsListProps) 
     <div className="space-y-2">
       {comments.map((comment) => (
         <div key={comment.id} className="flex space-x-2">
-          <p className="font-medium">{commentUsernames[comment.user_id] || 'Unknown User'}:</p>
+          <p className="font-medium">{commentUsernames[comment.user_id] || comment.user_id}:</p>
           <p className="text-gray-600">{comment.content}</p>
         </div>
       ))}
