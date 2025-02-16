@@ -15,6 +15,7 @@ interface CompletedTrail {
   difficulty_rating: "easy" | "moderate" | "hard";
   duration_minutes: number;
   completed_at: string;
+  trail_details?: SavedTrail;
 }
 
 interface SavedTrail {
@@ -41,15 +42,7 @@ const Profile = () => {
       if (!user) return;
 
       try {
-        const { data: completedData, error: completedError } = await supabase
-          .from('trail_completions')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('completed_at', { ascending: false });
-
-        if (completedError) throw completedError;
-        setCompletedTrails(completedData as CompletedTrail[] || []);
-
+        // First fetch saved trails to have the reference data
         const { data: savedData, error: savedError } = await supabase
           .from('saved_trails')
           .select('*')
@@ -57,7 +50,28 @@ const Profile = () => {
           .order('created_at', { ascending: false });
 
         if (savedError) throw savedError;
-        setSavedTrails(savedData as SavedTrail[] || []);
+        const savedTrailsData = savedData as SavedTrail[] || [];
+        setSavedTrails(savedTrailsData);
+
+        // Then fetch completed trails
+        const { data: completedData, error: completedError } = await supabase
+          .from('trail_completions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('completed_at', { ascending: false });
+
+        if (completedError) throw completedError;
+        
+        // Map the completed trails with their saved trail details
+        const completedWithDetails = (completedData || []).map(trail => {
+          const savedTrail = savedTrailsData.find(st => st.trail_id === trail.trail_id);
+          return {
+            ...trail,
+            trail_details: savedTrail,
+          };
+        });
+
+        setCompletedTrails(completedWithDetails);
       } catch (error) {
         console.error('Error fetching trails:', error);
       } finally {
@@ -67,6 +81,15 @@ const Profile = () => {
 
     fetchProfileAndTrails();
   }, [user]);
+
+  if (loading) {
+    return <div className="min-h-screen bg-gradient-to-b from-nature-50 to-white">
+      <Navbar />
+      <div className="container mx-auto px-4 pt-24">
+        Loading...
+      </div>
+    </div>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-nature-50 to-white">
@@ -84,23 +107,20 @@ const Profile = () => {
 
           <TabsContent value="completed">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {completedTrails.map((trail) => {
-                const savedTrail = savedTrails.find(st => st.trail_id === trail.trail_id);
-                return (
-                  <TrailCard
-                    key={trail.id}
-                    id={trail.trail_id}
-                    name={savedTrail?.trail_name || "Unknown Trail"}
-                    image={savedTrail?.trail_image || "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b"}
-                    difficulty={trail.difficulty_rating}
-                    rating={trail.rating}
-                    distance={savedTrail?.trail_distance || 0}
-                    time={savedTrail?.trail_time || `${Math.floor(trail.duration_minutes / 60)}h ${trail.duration_minutes % 60}m`}
-                    status="open"
-                    completed={true}
-                  />
-                );
-              })}
+              {completedTrails.map((trail) => (
+                <TrailCard
+                  key={trail.id}
+                  id={trail.trail_id}
+                  name={trail.trail_details?.trail_name || trail.trail_id}
+                  image={trail.trail_details?.trail_image || "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b"}
+                  difficulty={trail.difficulty_rating}
+                  rating={trail.rating}
+                  distance={trail.trail_details?.trail_distance || 0}
+                  time={trail.trail_details?.trail_time || `${Math.floor(trail.duration_minutes / 60)}h ${trail.duration_minutes % 60}m`}
+                  status="open"
+                  completed={true}
+                />
+              ))}
             </div>
           </TabsContent>
 
