@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { Camera, Loader2, PlusCircle, TreePine, Bird } from "lucide-react";
+import { Camera, Loader2, PlusCircle, TreePine, Bird, Calendar, Leaf, ExternalLink, MapPin } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import SocialPost from "@/components/SocialPost";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,52 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { pipeline } from "@huggingface/transformers";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+const ecoFacts = [
+  {
+    title: "Climate Impact on Local Birds",
+    description: "Rising temperatures are causing earlier spring migrations, affecting breeding patterns of local songbirds.",
+    icon: Bird
+  },
+  {
+    title: "Forest Ecosystem Changes",
+    description: "Warmer winters are allowing pine beetles to survive longer, threatening our conifer forests.",
+    icon: TreePine
+  },
+  {
+    title: "Native Plant Adaptations",
+    description: "Local wildflowers are blooming an average of 7 days earlier than they did 50 years ago.",
+    icon: Leaf
+  }
+];
+
+const conservationEvents = [
+  {
+    title: "Wildlife Photography Workshop",
+    date: "Next Saturday, 10 AM",
+    location: "Visitor Center",
+    description: "Learn how to photograph wildlife responsibly with professional nature photographer Sarah Johnson."
+  },
+  {
+    title: "Native Plant Restoration",
+    date: "Sunday, May 15, 9 AM",
+    location: "East Ridge Trail",
+    description: "Help us restore native plant species along the trail. Tools and guidance provided."
+  },
+  {
+    title: "Bird Migration Webinar",
+    date: "Thursday, 7 PM",
+    location: "Online",
+    description: "Join our expert panel discussing the impact of climate change on bird migration patterns."
+  }
+];
 
 const mockPosts = [
   {
@@ -165,20 +210,69 @@ const Social = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      <main className="container mx-auto px-4 pt-24 pb-12 max-w-2xl">
+      <main className="container mx-auto px-4 pt-24 pb-12 max-w-4xl">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Trail Community</h1>
           <p className="text-gray-600 mb-6">
             Share your hiking adventures and help document local wildlife
           </p>
           
+          {/* Eco Facts Section */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Today's Eco Facts</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {ecoFacts.map((fact, index) => (
+                <Card key={index} className="bg-green-50">
+                  <CardHeader className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <fact.icon className="w-5 h-5 text-green-600" />
+                      <CardTitle className="text-lg text-green-800">{fact.title}</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-green-700">{fact.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* Conservation Events Section */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Conservation Events</h2>
+            <div className="space-y-4">
+              {conservationEvents.map((event, index) => (
+                <Card key={index} className="text-left">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">{event.title}</CardTitle>
+                        <CardDescription>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <Calendar className="w-4 h-4 text-gray-500" />
+                            <span>{event.date}</span>
+                          </div>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <MapPin className="w-4 h-4 text-gray-500" />
+                            <span>{event.location}</span>
+                          </div>
+                        </CardDescription>
+                      </div>
+                      <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                        <ExternalLink className="w-4 h-4 mr-1" />
+                        Register
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-600">{event.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
           <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="mb-4">
-                <PlusCircle className="w-4 h-4 mr-2" />
-                Report Species Sighting
-              </Button>
-            </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Report Wildlife Sighting</DialogTitle>
