@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -36,6 +35,7 @@ interface SocialPostProps {
   timestamp: string;
   type?: "trail" | "species";
   speciesData?: SpeciesData;
+  userId: string; // Add userId prop
 }
 
 const SocialPost = ({
@@ -49,6 +49,7 @@ const SocialPost = ({
   timestamp,
   type = "trail",
   speciesData,
+  userId, // Add userId parameter
 }: SocialPostProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(initialLikes);
@@ -58,6 +59,23 @@ const SocialPost = ({
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
   const [commentUsernames, setCommentUsernames] = useState<Record<string, string>>({});
+  const [userProfile, setUserProfile] = useState<{ first_name?: string; last_name?: string } | null>(null);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', userId)
+        .single();
+      
+      if (data) {
+        setUserProfile(data);
+      }
+    };
+
+    fetchUserProfile();
+  }, [userId]);
 
   const checkIfLiked = async () => {
     if (!currentUser) return;
@@ -177,7 +195,13 @@ const SocialPost = ({
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <PostHeader user={user} userAvatar={userAvatar} timestamp={timestamp} />
+      <PostHeader 
+        user={user} 
+        userAvatar={userAvatar} 
+        timestamp={timestamp}
+        firstName={userProfile?.first_name}
+        lastName={userProfile?.last_name}
+      />
       <PostImage image={image} />
       
       <div className="p-4">
