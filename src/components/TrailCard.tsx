@@ -104,10 +104,14 @@ const TrailCard = ({
           description: "Trail has been removed from your saved trails",
         });
       } else {
+        // Convert the trail_id to a proper UUID format if it's not already
+        const trailUUID = id.includes('-') ? id : 
+          '00000000-0000-0000-0000-' + id.padStart(12, '0');
+        
         await supabase
           .from('saved_trails')
           .insert([
-            { trail_id: id, user_id: user.id }
+            { trail_id: trailUUID, user_id: user.id }
           ]);
         setIsSaved(true);
         toast({
@@ -116,6 +120,7 @@ const TrailCard = ({
         });
       }
     } catch (error) {
+      console.error('Error saving trail:', error);
       toast({
         title: "Error",
         description: "There was an error saving the trail",
@@ -135,11 +140,15 @@ const TrailCard = ({
     }
 
     try {
+      // Convert the trail_id to a proper UUID format if it's not already
+      const trailUUID = id.includes('-') ? id : 
+        '00000000-0000-0000-0000-' + id.padStart(12, '0');
+
       await supabase
         .from('trail_completions')
         .insert([
           {
-            trail_id: id,
+            trail_id: trailUUID,
             user_id: user.id,
             rating: reviewRating,
             review_text: reviewText,
@@ -154,6 +163,7 @@ const TrailCard = ({
         description: "Your completion and review have been saved",
       });
     } catch (error) {
+      console.error('Error completing trail:', error);
       toast({
         title: "Error",
         description: "There was an error saving your completion",

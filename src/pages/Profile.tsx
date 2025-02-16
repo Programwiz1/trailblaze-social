@@ -60,7 +60,11 @@ const Profile = () => {
           .eq('user_id', user.id);
 
         if (savedData) {
-          setSavedTrails(savedData);
+          setSavedTrails(savedData.map(trail => ({
+            ...trail,
+            trail_id: trail.trail_id.includes('-') ? trail.trail_id : 
+              '00000000-0000-0000-0000-' + trail.trail_id.padStart(12, '0')
+          })));
         }
 
         // Fetch completed trails
@@ -70,9 +74,10 @@ const Profile = () => {
           .eq('user_id', user.id);
 
         if (completedData) {
-          // Type assertion to ensure the difficulty_rating is of the correct type
           const typedCompletedData = completedData.map(trail => ({
             ...trail,
+            trail_id: trail.trail_id.includes('-') ? trail.trail_id : 
+              '00000000-0000-0000-0000-' + trail.trail_id.padStart(12, '0'),
             difficulty_rating: trail.difficulty_rating as "easy" | "moderate" | "hard" | null
           }));
           setCompletedTrails(typedCompletedData);
