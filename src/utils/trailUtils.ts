@@ -58,14 +58,13 @@ export const transformServerData = (data: Array<[string, number, number, number]
       }
 
       // Generate a fixed UUID based on the trail name to maintain consistency
-      const trailNameHash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      const seed = new Array(16).fill(0).map((_, i) => (trailNameHash + i) % 255);
-      const id = uuidv4({ random: seed });
+      const nameBuffer = Buffer.from(name);
+      const id = uuidv4({ random: nameBuffer });
 
       return {
         id,
         name: name,
-        image: `https://images.unsplash.com/photo-${natureImages[trailNameHash % natureImages.length]}`,
+        image: `https://images.unsplash.com/photo-${natureImages[nameBuffer[0] % natureImages.length]}`,
         difficulty: getDifficulty(popularityRank),
         rating: Math.min(5, popularityRank * 5),
         distance: Number(distanceValue.toFixed(1)),
