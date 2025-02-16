@@ -238,6 +238,30 @@ export type Database = {
           },
         ]
       }
+      trail_recommendations: {
+        Row: {
+          ai_recommendations: Json | null
+          created_at: string | null
+          id: string
+          processed_at: string | null
+          user_preferences: string
+        }
+        Insert: {
+          ai_recommendations?: Json | null
+          created_at?: string | null
+          id?: string
+          processed_at?: string | null
+          user_preferences: string
+        }
+        Update: {
+          ai_recommendations?: Json | null
+          created_at?: string | null
+          id?: string
+          processed_at?: string | null
+          user_preferences?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

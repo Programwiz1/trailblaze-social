@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Mock data for initial implementation
 const mockTrails = [
@@ -72,6 +74,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [distance, setDistance] = useState<string>("");
   const [transportMode, setTransportMode] = useState<string>("");
+  const [isSearching, setIsSearching] = useState(false);
 
   const calculateCarbonFootprint = (distance: string, mode: string) => {
     const dist = parseFloat(distance);
@@ -86,6 +89,35 @@ const Index = () => {
     };
     
     return (dist * (factors[mode as keyof typeof factors] || 0)).toFixed(2);
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      toast.error("Please enter your preferences first");
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      // Store the search query in the database
+      const { data, error } = await supabase
+        .from('trail_recommendations')
+        .insert([
+          { user_preferences: searchQuery }
+        ])
+        .select();
+
+      if (error) throw error;
+
+      toast.success("Processing your preferences...");
+      // For now, we'll continue showing the filtered results
+      // Later this will be replaced with AI-processed recommendations
+    } catch (error) {
+      console.error('Error processing search:', error);
+      toast.error("Something went wrong while processing your preferences");
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const filteredTrails = mockTrails.filter(trail => {
@@ -117,14 +149,23 @@ const Index = () => {
             <CardTitle className="text-nature-800">Find Your Perfect Trail</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-nature-500" />
-              <Input
-                placeholder="Enter any preferences"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+            <div className="flex gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-nature-500" />
+                <Input
+                  placeholder="Enter any preferences"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Button 
+                onClick={handleSearch}
+                disabled={isSearching || !searchQuery.trim()}
+                className="bg-nature-600 hover:bg-nature-700"
+              >
+                {isSearching ? "Processing..." : "Find Trails"}
+              </Button>
             </div>
           </CardContent>
         </Card>
