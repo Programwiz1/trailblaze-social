@@ -194,10 +194,29 @@ const TrailCard = ({
     }
 
     try {
-      // Convert the trail_id to a proper UUID format if it's not already
       const trailUUID = id.includes('-') ? id : 
         '00000000-0000-0000-0000-' + id.padStart(12, '0');
 
+      // First, check if the trail is already completed by this user
+      const { data: existingCompletion } = await supabase
+        .from('trail_completions')
+        .select('id')
+        .eq('trail_id', trailUUID)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingCompletion) {
+        // Trail is already completed by this user
+        toast({
+          title: "Already completed",
+          description: "You have already completed this trail",
+          variant: "destructive",
+        });
+        setIsCompleteDialogOpen(false);
+        return;
+      }
+
+      // If not completed, proceed with insertion
       const { error } = await supabase
         .from('trail_completions')
         .insert([
