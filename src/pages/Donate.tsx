@@ -2,7 +2,7 @@
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Tree, Globe, ArrowRight, HeartHandshake } from "lucide-react";
+import { Shield, Trees, Globe, ArrowRight, HeartHandshake } from "lucide-react";
 
 const conservationProjects = [
   {
@@ -62,7 +62,7 @@ const DonatePage = () => {
           </div>
           
           <div className="glass-card p-6 rounded-lg text-center">
-            <Tree className="w-10 h-10 mx-auto text-nature-600 mb-3" />
+            <Trees className="w-10 h-10 mx-auto text-nature-600 mb-3" />
             <h3 className="text-xl font-semibold mb-2">Forest Conservation</h3>
             <p className="text-gray-600">Preserve natural habitats</p>
           </div>
