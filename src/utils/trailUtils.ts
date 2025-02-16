@@ -47,22 +47,33 @@ export const transformServerData = (data: Array<[string, number, number, number]
     "1526772662000-3f88f10405ff"
   ];
 
-  const transformed = data.map((location, index) => {
-    const [name, weatherRank, popularityRank, distanceValue] = location;
-    
-    return {
-      id: `server-${index}`,
-      name: name,
-      image: `https://images.unsplash.com/photo-${natureImages[index]}`,
-      difficulty: getDifficulty(popularityRank), // Now using normalized popularity (0-1)
-      rating: Math.min(5, popularityRank * 5), // Convert 0-1 popularity to 0-5 rating
-      distance: Number(distanceValue.toFixed(1)), // Round to 1 decimal
-      time: formatDistance(distanceValue),
-      status: weatherRank >= 10 ? "open" : weatherRank >= 8 ? "warning" : "closed",
-      alert: weatherRank < 10 ? `Weather conditions: ${getWeatherIcon(weatherRank)}` : null
-    };
-  });
+  try {
+    const transformed = data.map((location, index) => {
+      // Ensure we have all required values
+      const [name, weatherRank, popularityRank, distanceValue] = location;
+      
+      if (!name || typeof weatherRank !== 'number' || typeof popularityRank !== 'number' || typeof distanceValue !== 'number') {
+        console.warn('Invalid data format for location:', location);
+        return null;
+      }
 
-  console.log('Transformed data:', transformed);
-  return transformed;
+      return {
+        id: `server-${index}`,
+        name: name,
+        image: `https://images.unsplash.com/photo-${natureImages[index % natureImages.length]}`,
+        difficulty: getDifficulty(popularityRank),
+        rating: Math.min(5, popularityRank * 5),
+        distance: Number(distanceValue.toFixed(1)),
+        time: formatDistance(distanceValue),
+        status: weatherRank >= 10 ? "open" : weatherRank >= 8 ? "warning" : "closed",
+        alert: weatherRank < 10 ? `Weather conditions: ${getWeatherIcon(weatherRank)}` : null
+      };
+    }).filter(item => item !== null); // Remove any null items from invalid data
+
+    console.log('Transformed data:', transformed);
+    return transformed;
+  } catch (error) {
+    console.error('Error transforming server data:', error);
+    return [];
+  }
 };

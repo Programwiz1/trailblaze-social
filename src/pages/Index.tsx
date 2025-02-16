@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useLoadScript } from "@react-google-maps/api";
 import Navbar from "@/components/Navbar";
@@ -126,7 +125,7 @@ const Index = () => {
       const { latitude, longitude } = position.coords;
       setCoordinates({ lat: latitude, lng: longitude });
 
-      console.log('Sending request with:', { latitude, longitude, description: searchQuery }); // Debug log
+      console.log('Sending request with:', { latitude, longitude, description: searchQuery });
 
       const response = await fetch('https://bcbf-136-159-213-22.ngrok-free.app/locations', {
         method: 'POST',
@@ -144,25 +143,43 @@ const Index = () => {
         throw new Error('Server response was not ok');
       }
 
-      const data = await response.json();
-      console.log("Server response:", data); // Debug log
+      const rawData = await response.json();
+      console.log("Raw server response:", rawData);
+
+      // Handle the case where the response is in the format { places: Array }
+      const placesData = Array.isArray(rawData) ? rawData : rawData.places;
       
-      if (!Array.isArray(data)) {
+      if (!Array.isArray(placesData)) {
         throw new Error('Invalid response format from server');
       }
 
-      setServerResponse(data);
+      // Transform the data into the expected format
+      const transformedData = placesData.map(place => {
+        if (Array.isArray(place)) {
+          return place; // Already in the correct format
+        }
+        // If it's an object, transform it to array format
+        return [
+          place.name || '',
+          place.weather_rank || 12.6,
+          place.popularity || 0.8,
+          place.distance || 0
+        ];
+      });
+
+      setServerResponse(transformedData);
       toast.success("Found the best locations for you!");
     } catch (error) {
       console.error('Error:', error);
       toast.error("Something went wrong while processing your request");
+      setServerResponse(null); // Reset on error
     } finally {
       setIsSearching(false);
     }
   };
 
   const displayedTrails = serverResponse ? transformServerData(serverResponse) : mockTrails;
-  console.log('Final displayed trails:', displayedTrails); // Debug log
+  console.log('Final displayed trails:', displayedTrails);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-nature-50 to-white">
