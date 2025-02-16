@@ -1,143 +1,138 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { PlusCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import SocialPost from "@/components/SocialPost";
 import {
   Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { SpeciesReportDialog } from "@/components/SpeciesReportDialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/integrations/supabase/client";
 import { EcoFactsSection } from "@/components/EcoFactsSection";
 import { ConservationEventsSection } from "@/components/ConservationEventsSection";
-import { useToast } from "@/components/ui/use-toast";
-import { pipeline } from "@huggingface/transformers";
-
-// Mock IUCN data for demonstration
-const iucnData: Record<string, { status: string; description: string; color: string }> = {
-  "Red-tailed Hawk": {
-    status: "Least Concern",
-    description: "Population stable and widespread",
-    color: "bg-green-100"
-  },
-  "Golden Eagle": {
-    status: "Near Threatened",
-    description: "Population declining due to habitat loss",
-    color: "bg-yellow-100"
-  },
-  "California Condor": {
-    status: "Critically Endangered",
-    description: "Extremely low population, intensive conservation efforts ongoing",
-    color: "bg-red-100"
-  }
-};
-
-const mockPosts = [
-  {
-    id: "1",
-    user: "Sarah Hiker",
-    userAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
-    image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b",
-    caption: "Just completed the Emerald Lake Trail! The views were absolutely breathtaking 🏔️ #hiking #nature #adventure",
-    likes: 124,
-    comments: [
-      {
-        id: "c1",
-        user: "John",
-        content: "Amazing view! Which trail is this?",
-        timestamp: "2h ago"
-      },
-      {
-        id: "c2",
-        user: "Lisa",
-        content: "Love this spot! The lake is so crystal clear.",
-        timestamp: "1h ago"
-      }
-    ],
-    timestamp: "3h ago",
-    type: "trail" as const
-  },
-  {
-    id: "2",
-    user: "Mike Adventure",
-    userAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
-    image: "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5",
-    caption: "Spotted this beautiful Red-tailed Hawk on Crystal Mountain Peak! 🦅 #wildlife #birdwatching",
-    likes: 89,
-    comments: [
-      {
-        id: "c3",
-        user: "Emma",
-        content: "What a magnificent bird!",
-        timestamp: "30m ago"
-      }
-    ],
-    timestamp: "5h ago",
-    type: "species" as const,
-    speciesData: {
-      name: "Red-tailed Hawk",
-      scientificName: "Buteo jamaicensis",
-      location: "Crystal Mountain Peak",
-      time: "7:30 AM",
-      confidence: 0.92,
-      conservationStatus: {
-        status: "Least Concern",
-        description: "Population stable and widespread",
-        color: "bg-green-100"
-      }
-    }
-  }
-];
-
-interface SpeciesReport {
-  image: File | null;
-  location: string;
-  notes: string;
-  identifiedSpecies?: string;
-  confidence?: number;
-  conservationStatus?: {
-    status: string;
-    description: string;
-    color: string;
-  };
-}
 
 const Social = () => {
-  const [isIdentifying, setIsIdentifying] = useState(false);
-  const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [speciesReport, setSpeciesReport] = useState<SpeciesReport>({
-    image: null,
-    location: "",
-    notes: ""
-  });
+  const [posts, setPosts] = useState<any[]>([]);
+  const [newPostOpen, setNewPostOpen] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [caption, setCaption] = useState("");
+  const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    fetchPosts();
+    setupRealtimeSubscription();
+  }, []);
+
+  const fetchPosts = async () => {
+    const { data, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        likes (count),
+        comments (
+          id,
+          content,
+          user_id,
+          created_at
+        )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching posts:', error);
+      return;
+    }
+
+    setPosts(data || []);
+  };
+
+  const setupRealtimeSubscription = () => {
+    const channel = supabase
+      .channel('public:posts')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'posts'
+      }, () => {
+        fetchPosts();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setSpeciesReport(prev => ({ ...prev, image: file }));
+      setImageFile(file);
     }
   };
 
-  const handleSubmitReport = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsIdentifying(true);
+    if (!imageFile || !user) return;
 
-    // Simulate species identification (replace with actual API call)
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    setUploading(true);
+    try {
+      // Upload image to Supabase Storage
+      const fileExt = imageFile.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const { error: uploadError, data } = await supabase.storage
+        .from('post-images')
+        .upload(fileName, imageFile);
 
-    setSpeciesReport(prev => ({
-      ...prev,
-      identifiedSpecies: "Monarch Butterfly",
-      confidence: 0.95,
-      conservationStatus: {
-        status: "Near Threatened",
-        description: "Monarch populations have declined due to habitat loss.",
-        color: "bg-yellow-100"
-      }
-    }));
+      if (uploadError) throw uploadError;
 
-    setIsIdentifying(false);
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('post-images')
+        .getPublicUrl(fileName);
+
+      // Create post in database
+      const { error: postError } = await supabase
+        .from('posts')
+        .insert([
+          {
+            user_id: user.id,
+            image_url: publicUrl,
+            caption: caption,
+            type: 'trail'
+          }
+        ]);
+
+      if (postError) throw postError;
+
+      toast({
+        title: "Success!",
+        description: "Your post has been shared.",
+      });
+
+      setNewPostOpen(false);
+      setImageFile(null);
+      setCaption("");
+    } catch (error) {
+      console.error('Error creating post:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to create post. Please try again.",
+      });
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -151,21 +146,43 @@ const Social = () => {
             Share your hiking adventures and help document local wildlife
           </p>
 
-          <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+          <Dialog open={newPostOpen} onOpenChange={setNewPostOpen}>
             <DialogTrigger asChild>
               <Button className="mb-8 bg-nature-600 hover:bg-nature-700 text-white">
                 <PlusCircle className="w-4 h-4 mr-2" />
-                Report Species Sighting
+                Create Post
               </Button>
             </DialogTrigger>
-            <SpeciesReportDialog
-              speciesReport={speciesReport}
-              isIdentifying={isIdentifying}
-              onImageUpload={handleImageUpload}
-              onSubmit={handleSubmitReport}
-              onLocationChange={(value) => setSpeciesReport(prev => ({ ...prev, location: value }))}
-              onNotesChange={(value) => setSpeciesReport(prev => ({ ...prev, notes: value }))}
-            />
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create a New Post</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="image">Image</Label>
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="caption">Caption</Label>
+                  <Textarea
+                    id="caption"
+                    value={caption}
+                    onChange={(e) => setCaption(e.target.value)}
+                    placeholder="Share your adventure..."
+                    required
+                  />
+                </div>
+                <Button type="submit" disabled={uploading} className="w-full">
+                  {uploading ? "Posting..." : "Post"}
+                </Button>
+              </form>
+            </DialogContent>
           </Dialog>
           
           <EcoFactsSection />
@@ -173,8 +190,19 @@ const Social = () => {
         </div>
 
         <div className="space-y-6">
-          {mockPosts.map((post) => (
-            <SocialPost key={post.id} {...post} />
+          {posts.map((post) => (
+            <SocialPost
+              key={post.id}
+              id={post.id}
+              user={post.user_id}
+              image={post.image_url}
+              caption={post.caption}
+              likes={post.likes?.[0]?.count || 0}
+              comments={post.comments || []}
+              timestamp={new Date(post.created_at).toLocaleDateString()}
+              type={post.type}
+              speciesData={post.species_data}
+            />
           ))}
         </div>
       </main>
