@@ -56,6 +56,8 @@ const Index = () => {
   const [serverResponse, setServerResponse] = useState<Array<[string, number, number, number]> | null>(null);
   const [googleMapsKey, setGoogleMapsKey] = useState<string>("");
 
+  console.log('Current serverResponse state:', serverResponse); // Debug log
+
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: googleMapsKey,
   });
@@ -70,10 +72,12 @@ const Index = () => {
       
       if (error) {
         console.error('Error fetching Google Maps API key:', error);
+        toast.error("Error loading Google Maps API key");
         return;
       }
       
       if (data) {
+        console.log('Successfully fetched Google Maps API key'); // Debug log
         setGoogleMapsKey(data.key_value);
       } else {
         console.error('Google Maps API key not found in database');
@@ -111,11 +115,6 @@ const Index = () => {
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       toast.error("Please enter your preferences first");
-      return;
-    }
-
-    if (!isLoaded) {
-      toast.error("Google Maps is not loaded yet");
       return;
     }
 
@@ -162,9 +161,8 @@ const Index = () => {
     }
   };
 
-  // Debug log for displayed trails
   const displayedTrails = serverResponse ? transformServerData(serverResponse) : mockTrails;
-  console.log('Final displayed trails:', displayedTrails);
+  console.log('Final displayed trails:', displayedTrails); // Debug log
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-nature-50 to-white">
@@ -200,9 +198,15 @@ const Index = () => {
         <LeaveNoTraceTips />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.isArray(displayedTrails) && displayedTrails.map((trail) => (
-            <TrailCard key={trail.id} {...trail} />
-          ))}
+          {displayedTrails && displayedTrails.length > 0 ? (
+            displayedTrails.map((trail) => (
+              <TrailCard key={trail.id} {...trail} />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-8 text-gray-500">
+              No trails found. Try searching for trails near you!
+            </div>
+          )}
         </div>
       </main>
     </div>
