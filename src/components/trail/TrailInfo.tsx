@@ -57,7 +57,7 @@ export const TrailInfo = ({ rating, distance, time, difficulty, status = "open",
         </div>
         
         <div>
-          <span>{distance.toFixed(1)} mi</span>
+          <span>{distance.toFixed(1)} km</span>
         </div>
         
         <div className="flex items-center">
