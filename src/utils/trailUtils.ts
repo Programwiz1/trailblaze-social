@@ -28,7 +28,7 @@ export const transformServerData = (data: Array<[string, number, number, number]
     return [];
   }
 
-  console.log('Transforming server data:', data);
+  console.log('Raw server data:', data);
 
   const natureImages = [
     "1464822759023-fed622ff2c3b",
@@ -49,11 +49,28 @@ export const transformServerData = (data: Array<[string, number, number, number]
   ];
 
   try {
-    const transformed = data.map((location) => {
-      const [name, weatherRank, popularityRank, distanceValue] = location;
+    // Clean and parse the data if it's a string (handling the tuple-like format)
+    const cleanedData = Array.isArray(data) ? data : [];
+    
+    const transformed = cleanedData.map((item) => {
+      // Handle both array format and tuple-like string format
+      let name, weatherRank, popularityRank, distanceValue;
       
+      if (Array.isArray(item)) {
+        [name, weatherRank, popularityRank, distanceValue] = item;
+      } else if (typeof item === 'string') {
+        // Parse tuple-like string format
+        const matches = item.match(/\('([^']+)',\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\)/);
+        if (matches) {
+          name = matches[1];
+          weatherRank = parseFloat(matches[2]);
+          popularityRank = parseFloat(matches[3]);
+          distanceValue = parseFloat(matches[4]);
+        }
+      }
+
       if (!name || typeof weatherRank !== 'number' || typeof popularityRank !== 'number' || typeof distanceValue !== 'number') {
-        console.warn('Invalid data format for location:', location);
+        console.warn('Invalid data format for location:', item);
         return null;
       }
 
@@ -63,7 +80,7 @@ export const transformServerData = (data: Array<[string, number, number, number]
 
       return {
         id,
-        name: name,
+        name,
         image: `https://images.unsplash.com/photo-${natureImages[nameBuffer[0] % natureImages.length]}`,
         difficulty: getDifficulty(popularityRank),
         rating: Math.min(5, popularityRank * 5),
