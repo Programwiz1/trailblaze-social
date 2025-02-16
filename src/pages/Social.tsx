@@ -10,82 +10,107 @@ import { Button } from "@/components/ui/button";
 import { SpeciesReportDialog } from "@/components/SpeciesReportDialog";
 import { EcoFactsSection } from "@/components/EcoFactsSection";
 import { ConservationEventsSection } from "@/components/ConservationEventsSection";
+import { useToast } from "@/components/ui/use-toast";
+import { pipeline } from "@huggingface/transformers";
 
-interface Comment {
-  id: string;
-  user: string;
-  content: string;
-  timestamp: string;
-}
-
-interface SocialPostProps {
-  id: string;
-  user: string;
-  userAvatar?: string;
-  image: string;
-  caption: string;
-  likes: number;
-  comments: Comment[];
-  timestamp: string;
-  type?: "trail" | "species";
-  speciesData?: SpeciesData;
-}
-
-interface SpeciesData {
-  name: string;
-  scientificName: string;
-  location: string;
-  time: string;
-  confidence: number;
-}
+// Mock IUCN data for demonstration
+const iucnData: Record<string, { status: string; description: string; color: string }> = {
+  "Red-tailed Hawk": {
+    status: "Least Concern",
+    description: "Population stable and widespread",
+    color: "bg-green-100"
+  },
+  "Golden Eagle": {
+    status: "Near Threatened",
+    description: "Population declining due to habitat loss",
+    color: "bg-yellow-100"
+  },
+  "California Condor": {
+    status: "Critically Endangered",
+    description: "Extremely low population, intensive conservation efforts ongoing",
+    color: "bg-red-100"
+  }
+};
 
 const mockPosts = [
   {
     id: "1",
-    user: "John Hikes",
-    userAvatar: "https://images.unsplash.com/photo-1503023345310-154ca6123c14?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8aHVtYW58ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60",
-    image: "https://images.unsplash.com/photo-15188398e99c9-e69e52ddca27?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTB8fG1vdW50YWlufGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=500&q=60",
-    caption: "Amazing hike at Emerald Lake! The views were breathtaking.",
-    likes: 32,
+    user: "Sarah Hiker",
+    userAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
+    image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b",
+    caption: "Just completed the Emerald Lake Trail! The views were absolutely breathtaking 🏔️ #hiking #nature #adventure",
+    likes: 124,
     comments: [
-      { id: "1", user: "Jane Doe", content: "Looks beautiful!", timestamp: "2 hours ago" },
-      { id: "2", user: "Peter Pan", content: "I need to visit this place.", timestamp: "1 hour ago" }
+      {
+        id: "c1",
+        user: "John",
+        content: "Amazing view! Which trail is this?",
+        timestamp: "2h ago"
+      },
+      {
+        id: "c2",
+        user: "Lisa",
+        content: "Love this spot! The lake is so crystal clear.",
+        timestamp: "1h ago"
+      }
     ],
-    timestamp: "3 hours ago"
+    timestamp: "3h ago",
+    type: "trail" as const
   },
   {
     id: "2",
-    user: "Wildlife Watcher",
-    userAvatar: "https://images.unsplash.com/photo-1534528741702-a0cfa97013ca?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8M3x8aHVtYW58ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60",
-    image: "https://images.unsplash.com/photo-1543326872-193f29a3924f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NXx8d2lsZGxpZmV8ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60",
-    caption: "Spotted a rare Blue Jay on the trail today! #wildlife #birdwatching",
-    likes: 57,
+    user: "Mike Adventure",
+    userAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+    image: "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5",
+    caption: "Spotted this beautiful Red-tailed Hawk on Crystal Mountain Peak! 🦅 #wildlife #birdwatching",
+    likes: 89,
     comments: [
-      { id: "3", user: "EcoFriend", content: "Great sighting!", timestamp: "4 hours ago" }
+      {
+        id: "c3",
+        user: "Emma",
+        content: "What a magnificent bird!",
+        timestamp: "30m ago"
+      }
     ],
-    timestamp: "5 hours ago",
-    type: "species",
+    timestamp: "5h ago",
+    type: "species" as const,
     speciesData: {
-      name: "Blue Jay",
-      scientificName: "Cyanocitta cristata",
-      location: "North Ridge Trail",
-      time: "11:30 AM",
-      confidence: 0.85
+      name: "Red-tailed Hawk",
+      scientificName: "Buteo jamaicensis",
+      location: "Crystal Mountain Peak",
+      time: "7:30 AM",
+      confidence: 0.92,
+      conservationStatus: {
+        status: "Least Concern",
+        description: "Population stable and widespread",
+        color: "bg-green-100"
+      }
     }
   }
 ];
 
+interface SpeciesReport {
+  image: File | null;
+  location: string;
+  notes: string;
+  identifiedSpecies?: string;
+  confidence?: number;
+  conservationStatus?: {
+    status: string;
+    description: string;
+    color: string;
+  };
+}
+
 const Social = () => {
+  const [isIdentifying, setIsIdentifying] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [speciesReport, setSpeciesReport] = useState({
+  const [speciesReport, setSpeciesReport] = useState<SpeciesReport>({
     image: null,
     location: "",
-    notes: "",
-    identifiedSpecies: undefined,
-    confidence: undefined,
-    conservationStatus: undefined,
+    notes: ""
   });
-  const [isIdentifying, setIsIdentifying] = useState(false);
+  const { toast } = useToast();
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
