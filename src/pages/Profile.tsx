@@ -14,7 +14,7 @@ interface CompletedTrail {
   review_text: string;
   difficulty_rating: "easy" | "moderate" | "hard";
   duration_minutes: number;
-  created_at: string;
+  completed_at: string; // Changed from created_at to completed_at to match DB schema
 }
 
 interface SavedTrail {
@@ -41,15 +41,15 @@ const Profile = () => {
       if (!user) return;
 
       try {
-        // Fetch completed trails
+        // Fetch completed trails - changed order by to completed_at
         const { data: completedData, error: completedError } = await supabase
           .from('trail_completions')
           .select('*')
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+          .order('completed_at', { ascending: false });
 
         if (completedError) throw completedError;
-        setCompletedTrails(completedData || []);
+        setCompletedTrails(completedData as CompletedTrail[] || []);
 
         // Fetch saved trails
         const { data: savedData, error: savedError } = await supabase
@@ -59,7 +59,7 @@ const Profile = () => {
           .order('created_at', { ascending: false });
 
         if (savedError) throw savedError;
-        setSavedTrails(savedData || []);
+        setSavedTrails(savedData as SavedTrail[] || []);
       } catch (error) {
         console.error('Error fetching trails:', error);
       } finally {
