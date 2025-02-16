@@ -153,18 +153,25 @@ const Index = () => {
         throw new Error('Invalid response format from server');
       }
 
-      // Transform the data into the expected format
-      const transformedData = placesData.map(place => {
-        if (Array.isArray(place)) {
-          return place; // Already in the correct format
+      // Transform the data into the expected format with explicit type
+      const transformedData: [string, number, number, number][] = placesData.map(place => {
+        if (Array.isArray(place) && place.length === 4) {
+          // Ensure each element has the correct type
+          const [name, weather, popularity, dist] = place;
+          return [
+            String(name),
+            Number(weather),
+            Number(popularity),
+            Number(dist)
+          ] as [string, number, number, number];
         }
-        // If it's an object, transform it to array format
+        // If it's an object, transform it to tuple format
         return [
-          place.name || '',
-          place.weather_rank || 12.6,
-          place.popularity || 0.8,
-          place.distance || 0
-        ];
+          String(place.name || ''),
+          Number(place.weather_rank || 12.6),
+          Number(place.popularity || 0.8),
+          Number(place.distance || 0)
+        ] as [string, number, number, number];
       });
 
       setServerResponse(transformedData);
