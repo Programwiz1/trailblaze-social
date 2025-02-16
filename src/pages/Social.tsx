@@ -45,6 +45,10 @@ const Social = () => {
           content,
           user_id,
           created_at
+        ),
+        profiles:user_id (
+          username,
+          avatar_url
         )
       `)
       .order('created_at', { ascending: false });
@@ -54,7 +58,14 @@ const Social = () => {
       return;
     }
 
-    setPosts(data || []);
+    // Transform the data to include the profile information
+    const transformedPosts = data?.map(post => ({
+      ...post,
+      username: post.profiles?.username,
+      userAvatar: post.profiles?.avatar_url,
+    }));
+
+    setPosts(transformedPosts || []);
   };
 
   const setupRealtimeSubscription = () => {
@@ -194,7 +205,8 @@ const Social = () => {
             <SocialPost
               key={post.id}
               id={post.id}
-              user={post.user_id}
+              user={post.username || post.user_id}
+              userAvatar={post.userAvatar}
               image={post.image_url}
               caption={post.caption}
               likes={post.likes?.[0]?.count || 0}

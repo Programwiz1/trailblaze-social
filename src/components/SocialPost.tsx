@@ -13,6 +13,7 @@ interface Comment {
   content: string;
   user_id: string;
   created_at: string;
+  username?: string;
 }
 
 interface SpeciesData {
@@ -50,11 +51,12 @@ const SocialPost = ({
 }: SocialPostProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(initialLikes);
-  const [comments, setComments] = useState(initialComments);
+  const [comments, setComments] = useState<Comment[]>(initialComments);
   const [newComment, setNewComment] = useState("");
   const [showComments, setShowComments] = useState(false);
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
+  const [commentUsernames, setCommentUsernames] = useState<Record<string, string>>({});
 
   const checkIfLiked = async () => {
     if (!currentUser) return;
@@ -72,6 +74,28 @@ const SocialPost = ({
   useEffect(() => {
     checkIfLiked();
   }, [currentUser, id]);
+
+  useEffect(() => {
+    const fetchCommentUsernames = async () => {
+      if (!comments.length) return;
+
+      const userIds = comments.map(comment => comment.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .in('id', userIds);
+
+      if (profiles) {
+        const usernameMap = profiles.reduce((acc, profile) => ({
+          ...acc,
+          [profile.id]: profile.username
+        }), {});
+        setCommentUsernames(usernameMap);
+      }
+    };
+
+    fetchCommentUsernames();
+  }, [comments]);
 
   const handleLike = async () => {
     if (!currentUser) {
@@ -123,6 +147,20 @@ const SocialPost = ({
         .single();
 
       if (error) throw error;
+
+      // Fetch the username for the new comment
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (profile) {
+        setCommentUsernames(prev => ({
+          ...prev,
+          [currentUser.id]: profile.username
+        }));
+      }
 
       setComments([...comments, comment]);
       setNewComment("");
@@ -178,7 +216,7 @@ const SocialPost = ({
             <div className="space-y-2">
               {comments.map((comment) => (
                 <div key={comment.id} className="flex space-x-2">
-                  <p className="font-medium">{comment.user_id}</p>
+                  <p className="font-medium">{commentUsernames[comment.user_id] || 'Unknown User'}:</p>
                   <p className="text-gray-600">{comment.content}</p>
                 </div>
               ))}
