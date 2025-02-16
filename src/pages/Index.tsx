@@ -96,6 +96,7 @@ const Index = () => {
       console.log('Server response:', data);
       
       const transformedTrails = transformServerData(data);
+      console.log('Transformed trails:', transformedTrails);
       setTrails(transformedTrails);
       
       toast.success("Found trails near you!");
