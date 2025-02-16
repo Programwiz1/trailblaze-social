@@ -79,10 +79,32 @@ export const completeTrail = async (
     reviewText: string;
     difficultyRating: string;
     durationMinutes: number;
+  },
+  trailDetails: {
+    name: string;
+    image: string;
+    difficulty: string;
+    rating: number;
+    distance: number;
+    time: string;
   }
 ) => {
   const trailUUID = getTrailUUID(trailId);
 
+  // First check if the trail is saved
+  const { data: savedTrail } = await supabase
+    .from('saved_trails')
+    .select('*')
+    .eq('trail_id', trailUUID)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  // If not saved, save it first
+  if (!savedTrail) {
+    await saveTrail(trailId, userId, trailDetails);
+  }
+
+  // Then add the completion
   const { error } = await supabase
     .from('trail_completions')
     .insert([{
