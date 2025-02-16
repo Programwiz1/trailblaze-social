@@ -20,8 +20,31 @@ import { supabase } from "@/integrations/supabase/client";
 import { EcoFactsSection } from "@/components/EcoFactsSection";
 import { ConservationEventsSection } from "@/components/ConservationEventsSection";
 
+interface PostProfile {
+  username: string;
+  avatar_url: string | null;
+}
+
+interface Post {
+  id: string;
+  user_id: string;
+  image_url: string;
+  caption: string | null;
+  created_at: string;
+  type: string | null;
+  species_data: any | null;
+  profiles: PostProfile;
+  likes: { count: number }[];
+  comments: Array<{
+    id: string;
+    content: string;
+    user_id: string;
+    created_at: string;
+  }>;
+}
+
 const Social = () => {
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [newPostOpen, setNewPostOpen] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [caption, setCaption] = useState("");
@@ -46,7 +69,7 @@ const Social = () => {
           user_id,
           created_at
         ),
-        profiles:user_id (
+        profiles: user_id (
           username,
           avatar_url
         )
@@ -59,7 +82,7 @@ const Social = () => {
     }
 
     // Transform the data to include the profile information
-    const transformedPosts = data?.map(post => ({
+    const transformedPosts = (data as Post[])?.map(post => ({
       ...post,
       username: post.profiles?.username,
       userAvatar: post.profiles?.avatar_url,
@@ -208,11 +231,11 @@ const Social = () => {
               user={post.username || post.user_id}
               userAvatar={post.userAvatar}
               image={post.image_url}
-              caption={post.caption}
+              caption={post.caption || ""}
               likes={post.likes?.[0]?.count || 0}
               comments={post.comments || []}
               timestamp={new Date(post.created_at).toLocaleDateString()}
-              type={post.type}
+              type={post.type as "trail" | "species" || "trail"}
               speciesData={post.species_data}
             />
           ))}
