@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Compass, Mountain, Heart, Search, User } from "lucide-react";
+import { Compass, Heart, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SignUpDialog } from "@/components/SignUpDialog";
 import { LoginDialog } from "@/components/LoginDialog";
@@ -29,7 +29,11 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center space-x-2">
-            <Mountain className="w-6 h-6 text-nature-600" />
+            <img 
+              src="/lovable-uploads/67e1f213-7994-4bc1-bb24-701640ab297e.png" 
+              alt="TrailBlaze Logo" 
+              className="w-6 h-6 text-nature-600"
+            />
             <span className="text-xl font-semibold text-nature-800">TrailBlaze</span>
           </Link>
           
