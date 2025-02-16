@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { Search, Filter, Car, Bus, Trash, Footprints, AlertTriangle, Loader2 } from "lucide-react";
+import { Search, Filter, Car, Bus, Trash, Footprints, AlertTriangle, Loader2, Sun, CloudRain, Cloud } from "lucide-react";
 import { useLoadScript } from "@react-google-maps/api";
 import Navbar from "@/components/Navbar";
 import TrailCard from "@/components/TrailCard";
@@ -72,13 +71,32 @@ const leaveNoTraceTips = [
   }
 ];
 
+const getWeatherIcon = (rank: number) => {
+  if (rank >= 8) return "Excellent";
+  if (rank >= 6) return "Good";
+  if (rank >= 4) return "Fair";
+  return "Poor";
+};
+
+const getDifficulty = (popularityRank: number): "easy" | "moderate" | "hard" => {
+  if (popularityRank >= 8) return "easy";
+  if (popularityRank >= 5) return "moderate";
+  return "hard";
+};
+
+const formatDistance = (distance: number): string => {
+  const hours = Math.floor(distance / 3);
+  const minutes = Math.round((distance % 3) * 20);
+  return `${hours}h ${minutes}m`;
+};
+
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [distance, setDistance] = useState<string>("");
   const [transportMode, setTransportMode] = useState<string>("");
   const [isSearching, setIsSearching] = useState(false);
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
-  const [serverResponse, setServerResponse] = useState<Record<string, any> | null>(null);
+  const [serverResponse, setServerResponse] = useState<Array<[string, number, number, number]> | null>(null);
   const [googleMapsKey, setGoogleMapsKey] = useState<string>("");
 
   // Fetch Google Maps API key from Supabase
@@ -174,7 +192,7 @@ const Index = () => {
 
       const data = await response.json();
       setServerResponse(data);
-      toast.success("Recommendations received!");
+      toast.success("Found the best locations for you!");
     } catch (error) {
       console.error('Error:', error);
       toast.error("Something went wrong while processing your request");
@@ -183,14 +201,23 @@ const Index = () => {
     }
   };
 
-  const filteredTrails = mockTrails.filter(trail => {
-    const searchTerms = searchQuery.toLowerCase();
-    return (
-      trail.name.toLowerCase().includes(searchTerms) ||
-      trail.difficulty.toLowerCase().includes(searchTerms) ||
-      trail.time.toLowerCase().includes(searchTerms)
-    );
-  });
+  const transformServerData = (data: [string, number, number, number][]) => {
+    return data.map((location, index) => ({
+      id: `server-${index}`,
+      name: location[0],
+      image: `https://source.unsplash.com/featured/?nature,trail&sig=${index}`,
+      difficulty: getDifficulty(location[2]),
+      rating: location[2], // Using popularity rank as rating
+      distance: location[3],
+      time: formatDistance(location[3]),
+      status: location[1] >= 6 ? "open" : location[1] >= 4 ? "warning" : "closed",
+      alert: location[1] < 6 ? `Weather conditions: ${getWeatherIcon(location[1])}` : null
+    }));
+  };
+
+  const displayedTrails = serverResponse 
+    ? transformServerData(serverResponse)
+    : mockTrails;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-nature-50 to-white">
@@ -243,22 +270,6 @@ const Index = () => {
                 <div className="flex items-center justify-center gap-4">
                   <Loader2 className="h-6 w-6 animate-spin text-nature-600" />
                   <p className="text-nature-600">Searching for trails near you...</p>
-                </div>
-              </div>
-            )}
-
-            {serverResponse && !isSearching && (
-              <div className="mt-4 p-4 bg-white rounded-lg border border-nature-200">
-                <h3 className="font-semibold mb-2 text-nature-800">Server Response:</h3>
-                <div className="space-y-2">
-                  {Object.entries(serverResponse).map(([key, value]) => (
-                    <div key={key} className="flex gap-2">
-                      <span className="font-medium text-nature-600">{key}:</span>
-                      <span className="text-nature-800">
-                        {typeof value === 'object' ? JSON.stringify(value) : value}
-                      </span>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}
@@ -354,7 +365,7 @@ const Index = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTrails.map((trail) => (
+          {displayedTrails.map((trail) => (
             <TrailCard key={trail.id} {...trail} />
           ))}
         </div>
