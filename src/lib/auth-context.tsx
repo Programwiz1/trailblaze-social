@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 // Initialize Supabase client with the correct project URL
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL || "https://alabhuxqqxqtbnhwykls.supabase.co",  // Your project URL
-  import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsYWJodXhxcXh4dGJuaHd5a2xzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDg4OTI0NjMsImV4cCI6MjAyNDQ2ODQ2M30.Y8YRCUyvuOi7v6qzPR3q5fHBT1P6jO-J-iMUGjkxZeA"  // Your project's anon key as fallback
+  import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsYWJodXhxcXhxdGJuaHd5a2xzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk2OTA0NDAsImV4cCI6MjA1NTI2NjQ0MH0.Epol7d6ffoY3NaNiP0nlKU5EF4BsMV1SVBW1KaiAZLc"  // Your project's anon key as fallback
 );
 
 interface User {
