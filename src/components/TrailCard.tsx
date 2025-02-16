@@ -1,7 +1,6 @@
-
 import { Star, Timer, ArrowUpRight, Bookmark, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "./ui/button";
@@ -55,6 +54,26 @@ const TrailCard = ({
   const [difficultyRating, setDifficultyRating] = useState<"easy" | "moderate" | "hard">("moderate");
   const [durationMinutes, setDurationMinutes] = useState<number>(120);
 
+  useEffect(() => {
+    const checkIfSaved = async () => {
+      if (!user) return;
+      
+      const trailUUID = id.includes('-') ? id : 
+        '00000000-0000-0000-0000-' + id.padStart(12, '0');
+
+      const { data } = await supabase
+        .from('saved_trails')
+        .select('id')
+        .eq('trail_id', trailUUID)
+        .eq('user_id', user.id)
+        .single();
+
+      setIsSaved(!!data);
+    };
+
+    checkIfSaved();
+  }, [id, user]);
+
   const getDifficultyColor = (diff: string) => {
     switch (diff) {
       case "easy":
@@ -92,27 +111,51 @@ const TrailCard = ({
     }
 
     try {
+      const trailUUID = id.includes('-') ? id : 
+        '00000000-0000-0000-0000-' + id.padStart(12, '0');
+
       if (isSaved) {
-        await supabase
+        // Delete the saved trail
+        const { error } = await supabase
           .from('saved_trails')
           .delete()
-          .eq('trail_id', id)
+          .eq('trail_id', trailUUID)
           .eq('user_id', user.id);
+
+        if (error) throw error;
+        
         setIsSaved(false);
         toast({
           title: "Trail unsaved",
           description: "Trail has been removed from your saved trails",
         });
       } else {
-        // Convert the trail_id to a proper UUID format if it's not already
-        const trailUUID = id.includes('-') ? id : 
-          '00000000-0000-0000-0000-' + id.padStart(12, '0');
-        
-        await supabase
+        // Check if trail is already saved
+        const { data: existingData } = await supabase
+          .from('saved_trails')
+          .select('id')
+          .eq('trail_id', trailUUID)
+          .eq('user_id', user.id)
+          .single();
+
+        if (existingData) {
+          toast({
+            title: "Already saved",
+            description: "This trail is already in your saved trails",
+          });
+          setIsSaved(true);
+          return;
+        }
+
+        // Save the trail
+        const { error } = await supabase
           .from('saved_trails')
           .insert([
             { trail_id: trailUUID, user_id: user.id }
           ]);
+
+        if (error) throw error;
+        
         setIsSaved(true);
         toast({
           title: "Trail saved",
