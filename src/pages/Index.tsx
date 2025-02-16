@@ -120,7 +120,7 @@ const Index = () => {
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-nature-500" />
               <Input
-                placeholder="Search trails by name, difficulty, or duration..."
+                placeholder="Enter any preferences"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
