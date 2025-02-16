@@ -156,7 +156,7 @@ const Index = () => {
       setCoordinates({ lat: latitude, lng: longitude });
 
       // Send data to server
-      const response = await fetch('https://46cd-136-159-213-22.ngrok-free.app/', {
+      const response = await fetch('https://1d6b-136-159-213-22.ngrok-free.app/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
