@@ -54,9 +54,13 @@ export const transformServerData = (data: ServerResponse | null) => {
     "1526772662000-3f88f10405ff"
   ];
 
-  return data.places.map(([name, weatherRank, popularityRank, distanceValue]) => {
-    const nameBuffer = Buffer.from(name);
-    const id = uuidv4({ random: nameBuffer });
+  return data.places.map(([name, weatherRank, popularityRank, distanceValue], index) => {
+    // Use a combination of index and name hash for image selection
+    const nameHash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const imageIndex = nameHash % natureImages.length;
+
+    // Generate a unique ID without using Buffer
+    const id = uuidv4();
 
     // Weather rank is 0-100 from the server's weather API
     const normalizedWeatherRank = weatherRank / 10; // Convert to 0-10 scale
@@ -64,7 +68,7 @@ export const transformServerData = (data: ServerResponse | null) => {
     return {
       id,
       name,
-      image: `https://images.unsplash.com/photo-${natureImages[nameBuffer[0] % natureImages.length]}`,
+      image: `https://images.unsplash.com/photo-${natureImages[imageIndex]}`,
       difficulty: getDifficulty(popularityRank),
       rating: Math.min(5, popularityRank * 5),
       distance: Number(distanceValue.toFixed(1)),
