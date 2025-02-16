@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Heart, MessageSquare, User } from "lucide-react";
+import { Heart, MessageSquare, User, Bird, MapPin, Clock } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,14 @@ interface Comment {
   timestamp: string;
 }
 
+interface SpeciesData {
+  name: string;
+  scientificName: string;
+  location: string;
+  time: string;
+  confidence: number;
+}
+
 interface SocialPostProps {
   id: string;
   user: string;
@@ -21,6 +29,8 @@ interface SocialPostProps {
   likes: number;
   comments: Comment[];
   timestamp: string;
+  type?: "trail" | "species";
+  speciesData?: SpeciesData;
 }
 
 const SocialPost = ({
@@ -31,6 +41,8 @@ const SocialPost = ({
   likes: initialLikes,
   comments: initialComments,
   timestamp,
+  type = "trail",
+  speciesData,
 }: SocialPostProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likes, setLikes] = useState(initialLikes);
@@ -73,7 +85,7 @@ const SocialPost = ({
         </div>
       </div>
 
-      <img src={image} alt="Trail post" className="w-full h-96 object-cover" />
+      <img src={image} alt="Post" className="w-full h-96 object-cover" />
 
       <div className="p-4">
         <div className="flex items-center space-x-4 mb-4">
@@ -94,6 +106,29 @@ const SocialPost = ({
         </div>
 
         <p className="text-gray-900 mb-2">{caption}</p>
+
+        {type === "species" && speciesData && (
+          <div className="mt-4 bg-green-50 rounded-lg p-4 space-y-2">
+            <div className="flex items-center space-x-2 text-green-800">
+              <Bird className="w-4 h-4" />
+              <span className="font-medium">{speciesData.name}</span>
+            </div>
+            <p className="text-sm text-green-700 italic">{speciesData.scientificName}</p>
+            <div className="flex items-center space-x-4 text-sm text-green-700">
+              <div className="flex items-center space-x-1">
+                <MapPin className="w-4 h-4" />
+                <span>{speciesData.location}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Clock className="w-4 h-4" />
+                <span>{speciesData.time}</span>
+              </div>
+            </div>
+            <div className="text-sm text-green-700">
+              AI Confidence: {(speciesData.confidence * 100).toFixed(1)}%
+            </div>
+          </div>
+        )}
 
         {showComments && (
           <div className="mt-4 space-y-4">
