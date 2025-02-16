@@ -66,9 +66,15 @@ const Navbar = () => {
 
             {user ? (
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-600">
-                  {user.user_metadata?.full_name || user.email}
-                </span>
+                <Link
+                  to="/profile"
+                  className={`flex items-center space-x-1 text-sm font-medium transition-colors ${
+                    isActive("/profile") ? "text-nature-600" : "text-gray-600 hover:text-nature-500"
+                  }`}
+                >
+                  <User className="w-4 h-4" />
+                  <span>Profile</span>
+                </Link>
                 <Button
                   variant="outline"
                   size="sm"
