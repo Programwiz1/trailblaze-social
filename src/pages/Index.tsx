@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Search, Filter, Car, Bus, Trash, Footprints, AlertTriangle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Filter, Car, Bus, Trash, Footprints, AlertTriangle, Loader2 } from "lucide-react";
+import { useLoadScript } from "@react-google-maps/api";
 import Navbar from "@/components/Navbar";
 import TrailCard from "@/components/TrailCard";
 import {
@@ -75,6 +76,43 @@ const Index = () => {
   const [distance, setDistance] = useState<string>("");
   const [transportMode, setTransportMode] = useState<string>("");
   const [isSearching, setIsSearching] = useState(false);
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [serverResponse, setServerResponse] = useState<Record<string, any> | null>(null);
+  const [googleMapsKey, setGoogleMapsKey] = useState<string>("");
+
+  // Fetch Google Maps API key from Supabase
+  useEffect(() => {
+    const fetchApiKey = async () => {
+      const { data, error } = await supabase
+        .from('api_keys')
+        .select('key_value')
+        .eq('key_name', 'GOOGLE_MAPS_API_KEY')
+        .single();
+      
+      if (error) {
+        console.error('Error fetching Google Maps API key:', error);
+        return;
+      }
+      
+      setGoogleMapsKey(data.key_value);
+    };
+
+    fetchApiKey();
+  }, []);
+
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: googleMapsKey,
+  });
+
+  const getCurrentLocation = (): Promise<GeolocationPosition> => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by your browser'));
+      } else {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      }
+    });
+  };
 
   const calculateCarbonFootprint = (distance: string, mode: string) => {
     const dist = parseFloat(distance);
@@ -98,23 +136,37 @@ const Index = () => {
     }
 
     setIsSearching(true);
+    setServerResponse(null);
+
     try {
-      // Store the search query in the database
-      const { data, error } = await supabase
-        .from('trail_recommendations')
-        .insert([
-          { user_preferences: searchQuery }
-        ])
-        .select();
+      // Get current location
+      const position = await getCurrentLocation();
+      const { latitude, longitude } = position.coords;
+      setCoordinates({ lat: latitude, lng: longitude });
 
-      if (error) throw error;
+      // Send data to server
+      const response = await fetch('https://46cd-136-159-213-22.ngrok-free.app/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          latitude,
+          longitude,
+          description: searchQuery
+        })
+      });
 
-      toast.success("Processing your preferences...");
-      // For now, we'll continue showing the filtered results
-      // Later this will be replaced with AI-processed recommendations
+      if (!response.ok) {
+        throw new Error('Server response was not ok');
+      }
+
+      const data = await response.json();
+      setServerResponse(data);
+      toast.success("Recommendations received!");
     } catch (error) {
-      console.error('Error processing search:', error);
-      toast.error("Something went wrong while processing your preferences");
+      console.error('Error:', error);
+      toast.error("Something went wrong while processing your request");
     } finally {
       setIsSearching(false);
     }
@@ -161,12 +213,44 @@ const Index = () => {
               </div>
               <Button 
                 onClick={handleSearch}
-                disabled={isSearching || !searchQuery.trim()}
+                disabled={isSearching || !searchQuery.trim() || !isLoaded}
                 className="bg-nature-600 hover:bg-nature-700"
               >
-                {isSearching ? "Processing..." : "Find Trails"}
+                {isSearching ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processing...
+                  </div>
+                ) : (
+                  "Find Trails"
+                )}
               </Button>
             </div>
+
+            {isSearching && (
+              <div className="mt-4 p-4 bg-nature-50 rounded-lg">
+                <div className="flex items-center justify-center gap-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-nature-600" />
+                  <p className="text-nature-600">Searching for trails near you...</p>
+                </div>
+              </div>
+            )}
+
+            {serverResponse && !isSearching && (
+              <div className="mt-4 p-4 bg-white rounded-lg border border-nature-200">
+                <h3 className="font-semibold mb-2 text-nature-800">Server Response:</h3>
+                <div className="space-y-2">
+                  {Object.entries(serverResponse).map(([key, value]) => (
+                    <div key={key} className="flex gap-2">
+                      <span className="font-medium text-nature-600">{key}:</span>
+                      <span className="text-nature-800">
+                        {typeof value === 'object' ? JSON.stringify(value) : value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
