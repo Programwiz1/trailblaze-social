@@ -28,7 +28,7 @@ const mockTrails = [
     rating: 4.8,
     distance: 3.2,
     time: "2h 30m",
-    status: "warning",
+    status: "warning" as const,
     alert: "Nesting season - partial closure"
   },
   {
@@ -39,7 +39,7 @@ const mockTrails = [
     rating: 4.9,
     distance: 5.6,
     time: "4h 15m",
-    status: "closed",
+    status: "closed" as const,
     alert: "Trail closed due to wildfire risk"
   },
   {
@@ -50,7 +50,7 @@ const mockTrails = [
     rating: 4.5,
     distance: 1.8,
     time: "1h 15m",
-    status: "open",
+    status: "open" as const,
     alert: null
   },
 ];
