@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 // Mock data for initial implementation
 const mockTrails = [
@@ -72,6 +73,10 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [distance, setDistance] = useState<string>("");
   const [transportMode, setTransportMode] = useState<string>("");
+  const [difficultyFilter, setDifficultyFilter] = useState<string>("");
+  const [minRating, setMinRating] = useState<string>("");
+  const [maxDistance, setMaxDistance] = useState<string>("");
+  const [timeRange, setTimeRange] = useState<string>("");
 
   const calculateCarbonFootprint = (distance: string, mode: string) => {
     const dist = parseFloat(distance);
@@ -88,6 +93,16 @@ const Index = () => {
     return (dist * (factors[mode as keyof typeof factors] || 0)).toFixed(2);
   };
 
+  const filteredTrails = mockTrails.filter(trail => {
+    const matchesSearch = trail.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesDifficulty = !difficultyFilter || trail.difficulty === difficultyFilter;
+    const matchesRating = !minRating || trail.rating >= parseFloat(minRating);
+    const matchesDistance = !maxDistance || trail.distance <= parseFloat(maxDistance);
+    const matchesTime = !timeRange || trail.time.includes(timeRange);
+
+    return matchesSearch && matchesDifficulty && matchesRating && matchesDistance && matchesTime;
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-nature-50 to-white">
       <Navbar />
@@ -102,6 +117,92 @@ const Index = () => {
             fellow adventurers.
           </p>
         </div>
+
+        {/* Search and Filters Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="text-nature-800">Find Your Perfect Trail</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-nature-500" />
+                <Input
+                  placeholder="Search trails..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Difficulty
+                  </label>
+                  <Select onValueChange={setDifficultyFilter} value={difficultyFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Any difficulty" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Any</SelectItem>
+                      <SelectItem value="easy">Easy</SelectItem>
+                      <SelectItem value="moderate">Moderate</SelectItem>
+                      <SelectItem value="hard">Hard</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Minimum Rating
+                  </label>
+                  <Select onValueChange={setMinRating} value={minRating}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Any rating" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Any</SelectItem>
+                      <SelectItem value="3">3+ Stars</SelectItem>
+                      <SelectItem value="4">4+ Stars</SelectItem>
+                      <SelectItem value="4.5">4.5+ Stars</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Maximum Distance
+                  </label>
+                  <Select onValueChange={setMaxDistance} value={maxDistance}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Any distance" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Any</SelectItem>
+                      <SelectItem value="2">Under 2 miles</SelectItem>
+                      <SelectItem value="5">Under 5 miles</SelectItem>
+                      <SelectItem value="10">Under 10 miles</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Time Range
+                  </label>
+                  <Select onValueChange={setTimeRange} value={timeRange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Any duration" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Any</SelectItem>
+                      <SelectItem value="1h">Under 1 hour</SelectItem>
+                      <SelectItem value="2h">Under 2 hours</SelectItem>
+                      <SelectItem value="3h">Under 3 hours</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card className="mb-8 bg-gradient-to-r from-nature-50 to-white border-nature-200">
           <CardHeader>
@@ -192,7 +293,7 @@ const Index = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockTrails.map((trail) => (
+          {filteredTrails.map((trail) => (
             <TrailCard key={trail.id} {...trail} />
           ))}
         </div>
