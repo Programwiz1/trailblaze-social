@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -6,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Bookmark, CheckCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 
 interface TrailCardActionsProps {
@@ -33,11 +32,43 @@ export const TrailCardActions = ({
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSaved, setIsSaved] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(completed);
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
   const [reviewRating, setReviewRating] = useState<number>(5);
   const [reviewText, setReviewText] = useState("");
   const [difficultyRating, setDifficultyRating] = useState<"easy" | "moderate" | "hard">("moderate");
   const [durationMinutes, setDurationMinutes] = useState<number>(120);
+
+  useEffect(() => {
+    const checkTrailStatus = async () => {
+      if (!user) return;
+
+      const trailUUID = id.includes('-') ? id : 
+        '00000000-0000-0000-0000-' + id.padStart(12, '0');
+
+      // Check if trail is saved
+      const { data: savedData } = await supabase
+        .from('saved_trails')
+        .select('id')
+        .eq('trail_id', trailUUID)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      setIsSaved(!!savedData);
+
+      // Check if trail is completed
+      const { data: completionData } = await supabase
+        .from('trail_completions')
+        .select('id')
+        .eq('trail_id', trailUUID)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      setIsCompleted(!!completionData);
+    };
+
+    checkTrailStatus();
+  }, [user, id]);
 
   const handleSaveTrail = async () => {
     if (!user) {
@@ -164,12 +195,11 @@ export const TrailCardActions = ({
       if (error) throw error;
 
       setIsCompleteDialogOpen(false);
+      setIsCompleted(true);
       toast({
         title: "Trail completed!",
         description: "Your completion and review have been saved",
       });
-
-      window.location.reload();
     } catch (error) {
       console.error('Error completing trail:', error);
       toast({
@@ -196,12 +226,11 @@ export const TrailCardActions = ({
 
       if (error) throw error;
 
+      setIsCompleted(false);
       toast({
         title: "Trail uncompleted",
         description: "Trail has been marked as incomplete",
       });
-
-      window.location.reload();
     } catch (error) {
       console.error('Error removing trail completion:', error);
       toast({
@@ -226,11 +255,11 @@ export const TrailCardActions = ({
         {isSaved ? "Saved" : "Save"}
       </Button>
 
-      {completed ? (
+      {isCompleted ? (
         <Button
           variant="outline"
           size="sm"
-          className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 border-green-200"
+          className="bg-green-600 text-white hover:bg-green-700 border-green-600"
           onClick={handleRemoveCompletion}
         >
           <CheckCircle className="h-4 w-4 mr-2 fill-current" />
@@ -242,7 +271,6 @@ export const TrailCardActions = ({
             <Button 
               variant="outline" 
               size="sm"
-              className={isCompleteDialogOpen ? "bg-green-600 text-white hover:bg-green-700 border-green-600" : ""}
             >
               <CheckCircle className="h-4 w-4 mr-2" />
               Mark as Complete
