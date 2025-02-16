@@ -40,7 +40,7 @@ export const usePosts = () => {
           user_id,
           created_at
         ),
-        profile:profiles!posts_user_id_fkey (
+        profiles!inner (
           username,
           avatar_url
         )
@@ -53,15 +53,16 @@ export const usePosts = () => {
     }
 
     if (data) {
-      // Filter out any posts where profile data might be missing
-      const validPosts = data.filter((post): post is Post => {
-        return post.profile && 
-               typeof post.profile === 'object' && 
-               'username' in post.profile && 
-               'avatar_url' in post.profile;
-      });
-      
-      setPosts(validPosts);
+      // Transform the data to match our Post interface
+      const transformedPosts = data.map(post => ({
+        ...post,
+        profile: {
+          username: post.profiles.username,
+          avatar_url: post.profiles.avatar_url
+        }
+      }));
+
+      setPosts(transformedPosts as Post[]);
     }
   };
 
