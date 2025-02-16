@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,23 +9,59 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 
+interface Profile {
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+}
+
 export const ProfileEditDialog = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, avatar_url')
+        .eq('id', user.id)
+        .single();
+
+      if (data) {
+        setProfile(data);
+        setFirstName(data.first_name || "");
+        setLastName(data.last_name || "");
+      }
+    };
+
+    if (open) {
+      fetchProfile();
+    }
+  }, [user, open]);
 
   const handleProfileUpdate = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!user) return;
 
-    try {
-      const updates = {
-        first_name: firstName,
-        last_name: lastName,
-      };
+    // Only update if there are actual changes
+    const updates: Partial<Profile> = {};
+    if (firstName !== profile?.first_name) updates.first_name = firstName || null;
+    if (lastName !== profile?.last_name) updates.last_name = lastName || null;
 
+    // If no changes, don't update
+    if (Object.keys(updates).length === 0) {
+      setOpen(false);
+      return;
+    }
+
+    try {
       const { error } = await supabase
         .from('profiles')
         .update(updates)
@@ -37,6 +73,7 @@ export const ProfileEditDialog = () => {
         title: "Success",
         description: "Profile updated successfully!",
       });
+      setOpen(false);
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
@@ -77,6 +114,12 @@ export const ProfileEditDialog = () => {
 
       if (updateError) throw updateError;
 
+      // Update local state
+      setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
+
+      // Force reload the page to update the avatar everywhere
+      window.location.reload();
+
       toast({
         title: "Success",
         description: "Profile picture updated successfully!",
@@ -94,7 +137,7 @@ export const ProfileEditDialog = () => {
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">Edit Profile</Button>
       </DialogTrigger>
