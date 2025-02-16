@@ -1,8 +1,12 @@
-
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Bird, Fish, Mountain, Trees, AlertTriangle, Navigation, Footprints, Binoculars } from "lucide-react";
+import { Bird, Fish, Mountain, Trees, AlertTriangle, Navigation, Footprints, Binoculars, Flame, CloudRain } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+} from "@/components/ui/alert";
 import {
   Tooltip,
   TooltipContent,
@@ -21,6 +25,15 @@ const trailsData = {
     distance: 3.2,
     time: "2h 30m",
     description: "A beautiful trail winding through diverse ecosystems, from wetlands to alpine meadows.",
+    alerts: [
+      {
+        type: "warning",
+        icon: AlertTriangle,
+        title: "Nesting Season - Partial Closure",
+        description: "Some sections of the trail are closed to protect nesting birds.",
+        severity: "medium"
+      }
+    ],
     habitats: [
       {
         type: "Wetland",
@@ -59,6 +72,100 @@ const trailsData = {
         icon: Navigation,
         title: "Navigation",
         description: "Download offline maps and carry a compass"
+      }
+    ]
+  },
+  "2": {
+    name: "Crystal Mountain Peak",
+    image: "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5",
+    difficulty: "hard",
+    rating: 4.9,
+    distance: 5.6,
+    time: "4h 15m",
+    description: "Challenging alpine trail with spectacular mountain views.",
+    alerts: [
+      {
+        type: "wildfire",
+        icon: Flame,
+        title: "Trail Closed - Wildfire Risk",
+        description: "Trail closed due to extreme fire danger in the area.",
+        severity: "high"
+      }
+    ],
+    habitats: [
+      {
+        type: "Alpine",
+        icon: Mountain,
+        description: "Rugged alpine terrain with sparse vegetation",
+        species: ["Ptarmigan", "Bighorn Sheep", "Snowshoe Hare"],
+        threats: ["Climate change", "Overgrazing"]
+      },
+      {
+        type: "Subalpine Forest",
+        icon: Trees,
+        description: "Dwarf trees and hardy shrubs adapted to high elevations",
+        species: ["Clark's Nutcracker", "Pine Marten", "Gray Wolf"],
+        threats: ["Deforestation", "Insects"]
+      }
+    ],
+    recommendations: [
+      {
+        icon: Footprints,
+        title: "Check Weather",
+        description: "Alpine weather can change rapidly, check the forecast"
+      },
+      {
+        icon: Binoculars,
+        title: "Avalanche Safety",
+        description: "Be aware of avalanche risks in winter"
+      },
+      {
+        icon: Navigation,
+        title: "Route Finding",
+        description: "Carry a map and compass, trail can be hard to follow"
+      }
+    ]
+  },
+  "3": {
+    name: "Riverside Nature Walk",
+    image: "https://images.unsplash.com/photo-1501555088652-021faa106b9b",
+    difficulty: "easy",
+    rating: 4.5,
+    distance: 1.8,
+    time: "1h 15m",
+    description: "Easy riverside trail perfect for nature observation.",
+    alerts: [],
+    habitats: [
+      {
+        type: "Riparian",
+        icon: Fish,
+        description: "Lush vegetation along the riverbank",
+        species: ["River Otter", "Great Blue Heron", "Rainbow Trout"],
+        threats: ["Pollution", "Habitat destruction"]
+      },
+      {
+        type: "Grassland",
+        icon: Mountain,
+        description: "Open fields with wildflowers and grasses",
+        species: ["Meadow Vole", "American Kestrel", "Monarch Butterfly"],
+        threats: ["Development", "Agriculture"]
+      }
+    ],
+    recommendations: [
+      {
+        icon: Footprints,
+        title: "Stay on Trail",
+        description: "Protect sensitive habitats by staying on marked paths"
+      },
+      {
+        icon: Binoculars,
+        title: "Bird Watching",
+        description: "Bring binoculars to spot diverse bird species"
+      },
+      {
+        icon: Navigation,
+        title: "Easy Access",
+        description: "Trail is well-maintained and easy to navigate"
       }
     ]
   }
@@ -104,6 +211,26 @@ const TrailDetail = () => {
             </div>
           </div>
         </div>
+
+        {trail.alerts && trail.alerts.length > 0 && (
+          <div className="mb-8">
+            {trail.alerts.map((alert, index) => (
+              <Alert 
+                key={index} 
+                variant={alert.severity === "high" ? "destructive" : "default"}
+                className="mb-4"
+              >
+                <alert.icon className="h-4 w-4" />
+                <AlertTitle className="flex items-center gap-2">
+                  {alert.title}
+                </AlertTitle>
+                <AlertDescription>
+                  {alert.description}
+                </AlertDescription>
+              </Alert>
+            ))}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">

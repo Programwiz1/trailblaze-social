@@ -1,12 +1,8 @@
+
 import { useState } from "react";
-import { Search, Filter, Car, Bus, Trash, Footprints, AlertTriangle, AlertCircle, CloudRain, Flame } from "lucide-react";
+import { Search, Filter, Car, Bus, Trash, Footprints, AlertTriangle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import TrailCard from "@/components/TrailCard";
-import {
-  Alert,
-  AlertTitle,
-  AlertDescription,
-} from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -52,26 +48,6 @@ const mockTrails = [
     status: "open" as const,
     alert: null
   },
-];
-
-// Mock weather alerts data
-const weatherAlerts = [
-  {
-    type: "wildfire",
-    icon: Flame,
-    title: "High Fire Risk",
-    description: "Extreme fire danger in Crystal Mountain area. Some trails closed.",
-    severity: "high",
-    affectedAreas: ["Crystal Mountain Peak", "Pine Ridge Loop"]
-  },
-  {
-    type: "flood",
-    icon: CloudRain,
-    title: "Flash Flood Warning",
-    description: "Potential flash floods in lowland areas. Check conditions before hiking.",
-    severity: "medium",
-    affectedAreas: ["Riverside Nature Walk"]
-  }
 ];
 
 const leaveNoTraceTips = [
@@ -126,28 +102,6 @@ const Index = () => {
             fellow adventurers.
           </p>
         </div>
-
-        {weatherAlerts.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-nature-800 mb-4">Active Alerts</h2>
-            <div className="space-y-4">
-              {weatherAlerts.map((alert) => (
-                <Alert key={alert.type} variant={alert.severity === "high" ? "destructive" : "default"}>
-                  <alert.icon className="h-4 w-4" />
-                  <AlertTitle className="flex items-center gap-2 text-nature-800">
-                    {alert.title}
-                  </AlertTitle>
-                  <AlertDescription className="text-nature-600">
-                    <p>{alert.description}</p>
-                    <p className="mt-2 text-sm font-medium">
-                      Affected trails: {alert.affectedAreas.join(", ")}
-                    </p>
-                  </AlertDescription>
-                </Alert>
-              ))}
-            </div>
-          </div>
-        )}
 
         <Card className="mb-8 bg-gradient-to-r from-nature-50 to-white border-nature-200">
           <CardHeader>
@@ -221,13 +175,19 @@ const Index = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {leaveNoTraceTips.map((tip) => (
-            <Alert key={tip.title} className="bg-nature-50 border-nature-200">
-              <tip.icon className="h-4 w-4 text-nature-600" />
-              <AlertTitle className="text-nature-800">{tip.title}</AlertTitle>
-              <AlertDescription className="text-nature-600">
-                {tip.description}
-              </AlertDescription>
-            </Alert>
+            <Card key={tip.title} className="bg-nature-50 border-nature-200">
+              <CardContent className="pt-6">
+                <div className="flex items-start space-x-4">
+                  <div className="p-2 bg-nature-100 rounded-lg">
+                    <tip.icon className="w-6 h-6 text-nature-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-nature-800">{tip.title}</h3>
+                    <p className="text-nature-600 text-sm">{tip.description}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
 
