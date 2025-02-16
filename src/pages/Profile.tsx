@@ -54,7 +54,13 @@ const Profile = () => {
           .order('created_at', { ascending: false });
 
         if (savedError) throw savedError;
-        setSavedTrails(savedData || []);
+        
+        // Transform trail_difficulty to ensure it matches the required type
+        const typedSavedTrails = (savedData || []).map(trail => ({
+          ...trail,
+          trail_difficulty: (trail.trail_difficulty || 'moderate') as "easy" | "moderate" | "hard"
+        }));
+        setSavedTrails(typedSavedTrails);
 
         // Fetch completed trails
         const { data: completedData, error: completedError } = await supabase
@@ -64,7 +70,18 @@ const Profile = () => {
           .order('completed_at', { ascending: false });
 
         if (completedError) throw completedError;
-        setCompletedTrails(completedData || []);
+
+        // Transform completed trails data to match the required interface
+        const typedCompletedTrails = (completedData || []).map(trail => ({
+          ...trail,
+          difficulty_rating: (trail.difficulty_rating || 'moderate') as "easy" | "moderate" | "hard",
+          trail_difficulty: (trail.trail_difficulty || 'moderate') as "easy" | "moderate" | "hard",
+          trail_name: trail.trail_name || "Unnamed Trail",
+          trail_image: trail.trail_image || "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b",
+          trail_distance: trail.trail_distance || 0,
+          trail_time: trail.trail_time || `${Math.floor((trail.duration_minutes || 0) / 60)}h ${(trail.duration_minutes || 0) % 60}m`
+        }));
+        setCompletedTrails(typedCompletedTrails);
       } catch (error) {
         console.error('Error fetching trails:', error);
       } finally {

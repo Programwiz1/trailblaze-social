@@ -190,7 +190,12 @@ export type Database = {
           id: string
           rating: number | null
           review_text: string | null
+          trail_difficulty: string | null
+          trail_distance: number | null
           trail_id: string
+          trail_image: string | null
+          trail_name: string | null
+          trail_time: string | null
           user_id: string
         }
         Insert: {
@@ -200,7 +205,12 @@ export type Database = {
           id?: string
           rating?: number | null
           review_text?: string | null
+          trail_difficulty?: string | null
+          trail_distance?: number | null
           trail_id: string
+          trail_image?: string | null
+          trail_name?: string | null
+          trail_time?: string | null
           user_id: string
         }
         Update: {
@@ -210,7 +220,12 @@ export type Database = {
           id?: string
           rating?: number | null
           review_text?: string | null
+          trail_difficulty?: string | null
+          trail_distance?: number | null
           trail_id?: string
+          trail_image?: string | null
+          trail_name?: string | null
+          trail_time?: string | null
           user_id?: string
         }
         Relationships: [
