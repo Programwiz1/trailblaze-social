@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Search, Filter, Car, Bus, Trash, Footprints, AlertTriangle } from "lucide-react";
+import { Search, Filter, Car, Bus, Trash, Footprints, AlertTriangle, AlertCircle, CloudRain, Flame } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import TrailCard from "@/components/TrailCard";
 import {
@@ -28,6 +28,8 @@ const mockTrails = [
     rating: 4.8,
     distance: 3.2,
     time: "2h 30m",
+    status: "warning",
+    alert: "Nesting season - partial closure"
   },
   {
     id: "2",
@@ -37,6 +39,8 @@ const mockTrails = [
     rating: 4.9,
     distance: 5.6,
     time: "4h 15m",
+    status: "closed",
+    alert: "Trail closed due to wildfire risk"
   },
   {
     id: "3",
@@ -46,7 +50,29 @@ const mockTrails = [
     rating: 4.5,
     distance: 1.8,
     time: "1h 15m",
+    status: "open",
+    alert: null
   },
+];
+
+// Mock weather alerts data
+const weatherAlerts = [
+  {
+    type: "wildfire",
+    icon: Flame,
+    title: "High Fire Risk",
+    description: "Extreme fire danger in Crystal Mountain area. Some trails closed.",
+    severity: "high",
+    affectedAreas: ["Crystal Mountain Peak", "Pine Ridge Loop"]
+  },
+  {
+    type: "flood",
+    icon: CloudRain,
+    title: "Flash Flood Warning",
+    description: "Potential flash floods in lowland areas. Check conditions before hiking.",
+    severity: "medium",
+    affectedAreas: ["Riverside Nature Walk"]
+  }
 ];
 
 const leaveNoTraceTips = [
@@ -101,6 +127,29 @@ const Index = () => {
             fellow adventurers.
           </p>
         </div>
+
+        {/* Weather and Trail Alerts Section */}
+        {weatherAlerts.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">Active Alerts</h2>
+            <div className="space-y-4">
+              {weatherAlerts.map((alert) => (
+                <Alert key={alert.type} variant={alert.severity === "high" ? "destructive" : "default"}>
+                  <alert.icon className="h-4 w-4" />
+                  <AlertTitle className="flex items-center gap-2">
+                    {alert.title}
+                  </AlertTitle>
+                  <AlertDescription>
+                    <p>{alert.description}</p>
+                    <p className="mt-2 text-sm font-medium">
+                      Affected trails: {alert.affectedAreas.join(", ")}
+                    </p>
+                  </AlertDescription>
+                </Alert>
+              ))}
+            </div>
+          </div>
+        )}
 
         <Card className="mb-8">
           <CardHeader>

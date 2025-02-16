@@ -10,9 +10,21 @@ interface TrailCardProps {
   rating: number;
   distance: number;
   time: string;
+  status?: "open" | "warning" | "closed";
+  alert?: string | null;
 }
 
-const TrailCard = ({ id, name, image, difficulty, rating, distance, time }: TrailCardProps) => {
+const TrailCard = ({ 
+  id, 
+  name, 
+  image, 
+  difficulty, 
+  rating, 
+  distance, 
+  time,
+  status = "open",
+  alert
+}: TrailCardProps) => {
   const getDifficultyColor = (diff: string) => {
     switch (diff) {
       case "easy":
@@ -20,6 +32,19 @@ const TrailCard = ({ id, name, image, difficulty, rating, distance, time }: Trai
       case "moderate":
         return "bg-yellow-100 text-yellow-800";
       case "hard":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "open":
+        return "bg-green-100 text-green-800";
+      case "warning":
+        return "bg-yellow-100 text-yellow-800";
+      case "closed":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -66,6 +91,12 @@ const TrailCard = ({ id, name, image, difficulty, rating, distance, time }: Trai
             <span>{time}</span>
           </div>
         </div>
+
+        {alert && (
+          <div className={`mt-3 p-2 rounded-md text-sm ${getStatusColor(status)}`}>
+            {alert}
+          </div>
+        )}
       </div>
       
       <div className="absolute right-4 top-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
