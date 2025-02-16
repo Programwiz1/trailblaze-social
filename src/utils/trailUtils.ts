@@ -1,4 +1,6 @@
 
+import { v4 as uuidv4 } from 'uuid';
+
 export const getWeatherIcon = (rank: number) => {
   if (rank >= 8) return "Excellent";
   if (rank >= 6) return "Good";
@@ -58,7 +60,7 @@ export const transformServerData = (data: Array<[string, number, number, number]
       }
 
       return {
-        id: `server-${index}`,
+        id: uuidv4(), // Generate a proper UUID for each trail
         name: name,
         image: `https://images.unsplash.com/photo-${natureImages[index % natureImages.length]}`,
         difficulty: getDifficulty(popularityRank),

@@ -1,12 +1,24 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export const getTrailUUID = (id: string) => {
-  return id.includes('-') ? id : '00000000-0000-0000-0000-' + id.padStart(12, '0');
+  // If the ID is already a UUID, return it as is
+  if (id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
+    return id;
+  }
+  // Otherwise, return null to indicate invalid ID
+  return null;
 };
 
 export const checkTrailStatus = async (trailId: string, userId: string) => {
   const trailUUID = getTrailUUID(trailId);
+  
+  // If the trail ID is not a valid UUID, return default values
+  if (!trailUUID) {
+    return {
+      isSaved: false,
+      isCompleted: false
+    };
+  }
 
   const [{ data: savedData }, { data: completionData }] = await Promise.all([
     supabase
@@ -42,6 +54,9 @@ export const saveTrail = async (
   }
 ) => {
   const trailUUID = getTrailUUID(trailId);
+  if (!trailUUID) {
+    throw new Error('Invalid trail ID format');
+  }
   
   const { error } = await supabase
     .from('saved_trails')
@@ -61,6 +76,9 @@ export const saveTrail = async (
 
 export const unsaveTrail = async (trailId: string, userId: string) => {
   const trailUUID = getTrailUUID(trailId);
+  if (!trailUUID) {
+    throw new Error('Invalid trail ID format');
+  }
   
   const { error } = await supabase
     .from('saved_trails')
@@ -90,8 +108,10 @@ export const completeTrail = async (
   }
 ) => {
   const trailUUID = getTrailUUID(trailId);
+  if (!trailUUID) {
+    throw new Error('Invalid trail ID format');
+  }
 
-  // Insert completion without automatically saving the trail
   const { error: completionError } = await supabase
     .from('trail_completions')
     .insert([{
@@ -113,6 +133,9 @@ export const completeTrail = async (
 
 export const uncompleteTrail = async (trailId: string, userId: string) => {
   const trailUUID = getTrailUUID(trailId);
+  if (!trailUUID) {
+    throw new Error('Invalid trail ID format');
+  }
 
   const { error } = await supabase
     .from('trail_completions')
