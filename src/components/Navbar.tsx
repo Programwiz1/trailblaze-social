@@ -1,10 +1,16 @@
 
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Compass, Mountain, Heart, Search } from "lucide-react";
+import { Compass, Mountain, Heart, Search, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SignUpDialog } from "@/components/SignUpDialog";
+import { useAuth } from "@/lib/auth-context";
 
 const Navbar = () => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
+  const [signUpOpen, setSignUpOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/80 border-b border-gray-200">
@@ -45,9 +51,34 @@ const Navbar = () => {
               <Heart className="w-4 h-4" />
               <span>Donate</span>
             </Link>
+
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-600">
+                  {user.user_metadata?.full_name || user.email}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => signOut()}
+                  className="text-nature-600 border-nature-600 hover:bg-nature-50"
+                >
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={() => setSignUpOpen(true)}
+                className="bg-nature-600 hover:bg-nature-700 text-white"
+              >
+                <User className="w-4 h-4 mr-2" />
+                Sign Up
+              </Button>
+            )}
           </div>
         </div>
       </div>
+      <SignUpDialog open={signUpOpen} onOpenChange={setSignUpOpen} />
     </nav>
   );
 };
