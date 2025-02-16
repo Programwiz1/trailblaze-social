@@ -24,16 +24,8 @@ export const formatDistance = (distance: number): string => {
 
 type LocationTuple = [string, number, number, number];
 
-interface ServerResponse {
-  client_location: {
-    latitude: number;
-    longitude: number;
-  };
-  places: LocationTuple[];
-}
-
-export const transformServerData = (data: ServerResponse | null) => {
-  if (!data || !data.places || !Array.isArray(data.places)) {
+export const transformServerData = (data: LocationTuple[] | null) => {
+  if (!data || !Array.isArray(data)) {
     console.warn('Invalid or missing data received from server');
     return [];
   }
@@ -56,7 +48,7 @@ export const transformServerData = (data: ServerResponse | null) => {
     "1526772662000-3f88f10405ff"
   ];
 
-  return data.places.map(([name, weatherRank, popularityRank, distanceValue]) => {
+  return data.map(([name, weatherRank, popularityRank, distanceValue]) => {
     const nameBuffer = Buffer.from(name);
     const id = uuidv4({ random: nameBuffer });
 
