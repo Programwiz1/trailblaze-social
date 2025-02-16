@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Search, Filter, Car, Bus, Trash, Footprints, AlertTriangle } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -73,10 +72,10 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [distance, setDistance] = useState<string>("");
   const [transportMode, setTransportMode] = useState<string>("");
-  const [difficultyFilter, setDifficultyFilter] = useState<string>("");
-  const [minRating, setMinRating] = useState<string>("");
-  const [maxDistance, setMaxDistance] = useState<string>("");
-  const [timeRange, setTimeRange] = useState<string>("");
+  const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
+  const [minRating, setMinRating] = useState<string>("all");
+  const [maxDistance, setMaxDistance] = useState<string>("all");
+  const [timeRange, setTimeRange] = useState<string>("all");
 
   const calculateCarbonFootprint = (distance: string, mode: string) => {
     const dist = parseFloat(distance);
@@ -95,10 +94,10 @@ const Index = () => {
 
   const filteredTrails = mockTrails.filter(trail => {
     const matchesSearch = trail.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDifficulty = !difficultyFilter || trail.difficulty === difficultyFilter;
-    const matchesRating = !minRating || trail.rating >= parseFloat(minRating);
-    const matchesDistance = !maxDistance || trail.distance <= parseFloat(maxDistance);
-    const matchesTime = !timeRange || trail.time.includes(timeRange);
+    const matchesDifficulty = difficultyFilter === "all" || trail.difficulty === difficultyFilter;
+    const matchesRating = minRating === "all" || trail.rating >= parseFloat(minRating);
+    const matchesDistance = maxDistance === "all" || trail.distance <= parseFloat(maxDistance);
+    const matchesTime = timeRange === "all" || trail.time.includes(timeRange);
 
     return matchesSearch && matchesDifficulty && matchesRating && matchesDistance && matchesTime;
   });
@@ -118,7 +117,6 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Search and Filters Section */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="text-nature-800">Find Your Perfect Trail</CardTitle>
@@ -144,7 +142,7 @@ const Index = () => {
                       <SelectValue placeholder="Any difficulty" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Any</SelectItem>
+                      <SelectItem value="all">Any difficulty</SelectItem>
                       <SelectItem value="easy">Easy</SelectItem>
                       <SelectItem value="moderate">Moderate</SelectItem>
                       <SelectItem value="hard">Hard</SelectItem>
@@ -160,7 +158,7 @@ const Index = () => {
                       <SelectValue placeholder="Any rating" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Any</SelectItem>
+                      <SelectItem value="all">Any rating</SelectItem>
                       <SelectItem value="3">3+ Stars</SelectItem>
                       <SelectItem value="4">4+ Stars</SelectItem>
                       <SelectItem value="4.5">4.5+ Stars</SelectItem>
@@ -176,7 +174,7 @@ const Index = () => {
                       <SelectValue placeholder="Any distance" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Any</SelectItem>
+                      <SelectItem value="all">Any distance</SelectItem>
                       <SelectItem value="2">Under 2 miles</SelectItem>
                       <SelectItem value="5">Under 5 miles</SelectItem>
                       <SelectItem value="10">Under 10 miles</SelectItem>
@@ -192,7 +190,7 @@ const Index = () => {
                       <SelectValue placeholder="Any duration" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Any</SelectItem>
+                      <SelectItem value="all">Any duration</SelectItem>
                       <SelectItem value="1h">Under 1 hour</SelectItem>
                       <SelectItem value="2h">Under 2 hours</SelectItem>
                       <SelectItem value="3h">Under 3 hours</SelectItem>
