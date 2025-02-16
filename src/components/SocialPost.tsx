@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Heart, MessageSquare, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -69,9 +69,9 @@ const SocialPost = ({
     setIsLiked(!!data);
   };
 
-  useState(() => {
+  useEffect(() => {
     checkIfLiked();
-  }, []);
+  }, [currentUser, id]);
 
   const handleLike = async () => {
     if (!currentUser) {
