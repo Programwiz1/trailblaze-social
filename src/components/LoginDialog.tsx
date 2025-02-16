@@ -13,18 +13,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 
-interface SignUpDialogProps {
+interface LoginDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSwitchToLogin: () => void;
+  onSwitchToSignUp: () => void;
 }
 
-export function SignUpDialog({ open, onOpenChange, onSwitchToLogin }: SignUpDialogProps) {
-  const [fullName, setFullName] = useState("");
+export function LoginDialog({ open, onOpenChange, onSwitchToSignUp }: LoginDialogProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
+  const { signIn } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,10 +31,10 @@ export function SignUpDialog({ open, onOpenChange, onSwitchToLogin }: SignUpDial
     setLoading(true);
 
     try {
-      await signUp(email, password, fullName);
+      await signIn(email, password);
       toast({
-        title: "Welcome to TrailBlaze!",
-        description: "Please check your email to confirm your account.",
+        title: "Welcome back!",
+        description: "You've successfully signed in to TrailBlaze.",
       });
       onOpenChange(false);
     } catch (error) {
@@ -53,21 +52,12 @@ export function SignUpDialog({ open, onOpenChange, onSwitchToLogin }: SignUpDial
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create your TrailBlaze account</DialogTitle>
+          <DialogTitle>Welcome back to TrailBlaze</DialogTitle>
           <DialogDescription>
-            Join our community of trail enthusiasts and start sharing your adventures.
+            Sign in to your account to continue your adventure.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
-            <Input
-              id="fullName"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-            />
-          </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -86,20 +76,19 @@ export function SignUpDialog({ open, onOpenChange, onSwitchToLogin }: SignUpDial
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account..." : "Sign Up"}
+            {loading ? "Signing in..." : "Sign In"}
           </Button>
           <div className="text-center text-sm text-gray-500">
-            Already have an account?{" "}
+            Don't have an account?{" "}
             <Button
               variant="link"
               className="p-0 h-auto font-semibold text-nature-600"
-              onClick={onSwitchToLogin}
+              onClick={onSwitchToSignUp}
             >
-              Sign in here
+              Sign up here
             </Button>
           </div>
         </form>
