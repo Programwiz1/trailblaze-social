@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PlusCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -80,13 +81,7 @@ const Social = () => {
       return;
     }
 
-    const transformedPosts = data.map(post => ({
-      ...post,
-      username: post.profile?.username,
-      userAvatar: post.profile?.avatar_url,
-    }));
-
-    setPosts(transformedPosts);
+    setPosts(data || []);
   };
 
   const setupRealtimeSubscription = () => {
@@ -226,8 +221,8 @@ const Social = () => {
             <SocialPost
               key={post.id}
               id={post.id}
-              user={post.username || post.user_id}
-              userAvatar={post.userAvatar}
+              user={post.profile?.username || post.user_id}
+              userAvatar={post.profile?.avatar_url}
               image={post.image_url}
               caption={post.caption || ""}
               likes={post.likes?.[0]?.count || 0}
