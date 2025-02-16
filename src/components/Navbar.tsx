@@ -31,10 +31,10 @@ const Navbar = () => {
           <Link to="/" className="flex items-center space-x-2">
             <img 
               src="/lovable-uploads/67e1f213-7994-4bc1-bb24-701640ab297e.png" 
-              alt="TrailBlaze Logo" 
+              alt="WildTrails Logo" 
               className="w-14 h-14 text-nature-600"
             />
-            <span className="text-xl font-semibold text-nature-800">TrailBlaze</span>
+            <span className="text-xl font-semibold text-nature-800">WildTrails</span>
           </Link>
           
           <div className="hidden md:flex items-center space-x-8">
