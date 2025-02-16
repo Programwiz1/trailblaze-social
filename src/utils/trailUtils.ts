@@ -22,7 +22,9 @@ export const formatDistance = (distance: number): string => {
   return `${hours}h ${minutes}m`;
 };
 
-export const transformServerData = (data: Array<[string, number, number, number]> | null) => {
+type LocationTuple = [string, number, number, number];
+
+export const transformServerData = (data: LocationTuple[] | null) => {
   if (!data || !Array.isArray(data)) {
     console.warn('Invalid or missing data received from server');
     return [];
@@ -49,28 +51,28 @@ export const transformServerData = (data: Array<[string, number, number, number]
   ];
 
   try {
-    // Clean and parse the data if it's a string (handling the tuple-like format)
-    const cleanedData = Array.isArray(data) ? data : [];
-    
-    const transformed = cleanedData.map((item) => {
-      // Handle both array format and tuple-like string format
-      let name, weatherRank, popularityRank, distanceValue;
-      
-      if (Array.isArray(item)) {
+    const transformed = data.map((item) => {
+      let name: string, weatherRank: number, popularityRank: number, distanceValue: number;
+
+      if (Array.isArray(item) && item.length === 4) {
         [name, weatherRank, popularityRank, distanceValue] = item;
       } else if (typeof item === 'string') {
-        // Parse tuple-like string format
-        const matches = item.match(/\('([^']+)',\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\)/);
-        if (matches) {
-          name = matches[1];
-          weatherRank = parseFloat(matches[2]);
-          popularityRank = parseFloat(matches[3]);
-          distanceValue = parseFloat(matches[4]);
+        const tupleMatch = item.match(/\('([^']+)',\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\)/);
+        if (!tupleMatch) {
+          console.warn('Invalid tuple format:', item);
+          return null;
         }
+        name = tupleMatch[1];
+        weatherRank = parseFloat(tupleMatch[2]);
+        popularityRank = parseFloat(tupleMatch[3]);
+        distanceValue = parseFloat(tupleMatch[4]);
+      } else {
+        console.warn('Invalid item format:', item);
+        return null;
       }
 
       if (!name || typeof weatherRank !== 'number' || typeof popularityRank !== 'number' || typeof distanceValue !== 'number') {
-        console.warn('Invalid data format for location:', item);
+        console.warn('Invalid data values:', { name, weatherRank, popularityRank, distanceValue });
         return null;
       }
 
@@ -89,7 +91,7 @@ export const transformServerData = (data: Array<[string, number, number, number]
         status: weatherRank >= 10 ? "open" : weatherRank >= 8 ? "warning" : "closed",
         alert: weatherRank < 10 ? `Weather conditions: ${getWeatherIcon(weatherRank)}` : null
       };
-    }).filter(item => item !== null);
+    }).filter((item): item is NonNullable<typeof item> => item !== null);
 
     console.log('Transformed data:', transformed);
     return transformed;
