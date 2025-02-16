@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PlusCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -33,7 +32,7 @@ interface Post {
   created_at: string;
   type: string | null;
   species_data: any | null;
-  profiles: PostProfile;
+  profile: PostProfile;
   likes: { count: number }[];
   comments: Array<{
     id: string;
@@ -69,7 +68,7 @@ const Social = () => {
           user_id,
           created_at
         ),
-        profiles: user_id (
+        profile:profiles!posts_user_id_fkey (
           username,
           avatar_url
         )
@@ -81,14 +80,13 @@ const Social = () => {
       return;
     }
 
-    // Transform the data to include the profile information
-    const transformedPosts = (data as Post[])?.map(post => ({
+    const transformedPosts = data.map(post => ({
       ...post,
-      username: post.profiles?.username,
-      userAvatar: post.profiles?.avatar_url,
+      username: post.profile?.username,
+      userAvatar: post.profile?.avatar_url,
     }));
 
-    setPosts(transformedPosts || []);
+    setPosts(transformedPosts);
   };
 
   const setupRealtimeSubscription = () => {
