@@ -360,7 +360,7 @@ const TrailCard = ({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="hover:bg-green-50 hover:text-green-600 hover:border-green-200"
+                  className={isCompleteDialogOpen ? "bg-green-50 text-green-600 border-green-200" : ""}
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Mark as Complete
