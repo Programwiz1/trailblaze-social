@@ -1,10 +1,11 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 // Initialize Supabase client with the correct project URL
 const supabase = createClient(
-  "https://alabhuxqqxqtbnhwykls.supabase.co",  // Your project URL
-  "your-anon-key"  // This will be replaced by the actual key
+  process.env.SUPABASE_URL || "https://alabhuxqqxqtbnhwykls.supabase.co",  // Your project URL
+  process.env.SUPABASE_ANON_KEY || ""  // Will be injected by Lovable
 );
 
 interface User {
