@@ -104,12 +104,24 @@ export const TrailCardActions = ({
     }
 
     try {
-      await completeTrail(id, user.id, {
-        rating: reviewRating,
-        reviewText,
-        difficultyRating,
-        durationMinutes
-      });
+      await completeTrail(
+        id, 
+        user.id, 
+        {
+          rating: reviewRating,
+          reviewText,
+          difficultyRating,
+          durationMinutes
+        },
+        {
+          name,
+          image,
+          difficulty,
+          rating,
+          distance,
+          time
+        }
+      );
       
       setIsCompleteDialogOpen(false);
       setIsCompleted(true);
