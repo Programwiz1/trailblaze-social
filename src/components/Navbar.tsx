@@ -32,7 +32,7 @@ const Navbar = () => {
             <img 
               src="/lovable-uploads/67e1f213-7994-4bc1-bb24-701640ab297e.png" 
               alt="TrailBlaze Logo" 
-              className="w-6 h-6 text-nature-600"
+              className="w-10 h-10 text-nature-600"
             />
             <span className="text-xl font-semibold text-nature-800">TrailBlaze</span>
           </Link>
