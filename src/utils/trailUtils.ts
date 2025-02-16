@@ -18,21 +18,33 @@ export const formatDistance = (distance: number): string => {
   return `${hours}h ${minutes}m`;
 };
 
-export const transformServerData = (data: [string, number, number, number][] | null) => {
+export const transformServerData = (data: Array<[string, number, number, number]> | null) => {
   if (!data || !Array.isArray(data)) {
     console.warn('Invalid or missing data received from server');
     return [];
   }
 
-  return data.map((location, index) => ({
-    id: `server-${index}`,
-    name: location[0],
-    image: `https://source.unsplash.com/featured/?nature,trail&sig=${index}`,
-    difficulty: getDifficulty(location[2]),
-    rating: location[2],
-    distance: location[3],
-    time: formatDistance(location[3]),
-    status: location[1] >= 6 ? "open" : location[1] >= 4 ? "warning" : "closed",
-    alert: location[1] < 6 ? `Weather conditions: ${getWeatherIcon(location[1])}` : null
-  }));
+  console.log('Transforming server data:', data); // Debug log
+
+  const transformed = data.map((location, index) => {
+    // Debug log for each location
+    console.log('Processing location:', location);
+    
+    const [name, weatherRank, popularityRank, distanceValue] = location;
+    
+    return {
+      id: `server-${index}`,
+      name: name,
+      image: `https://images.unsplash.com/photo-${1464822759023 + index}-fed622ff2c3b`,
+      difficulty: getDifficulty(popularityRank),
+      rating: Math.min(5, (popularityRank / 2) + 2.5), // Convert popularity to a 0-5 rating
+      distance: distanceValue,
+      time: formatDistance(distanceValue),
+      status: weatherRank >= 6 ? "open" : weatherRank >= 4 ? "warning" : "closed",
+      alert: weatherRank < 6 ? `Weather conditions: ${getWeatherIcon(weatherRank)}` : null
+    };
+  });
+
+  console.log('Transformed data:', transformed); // Debug log
+  return transformed;
 };

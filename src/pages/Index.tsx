@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import SearchTrails from "@/components/trails/SearchTrails";
 import TravelImpactCalculator from "@/components/trails/TravelImpactCalculator";
 import LeaveNoTraceTips from "@/components/trails/LeaveNoTraceTips";
-import { transformServerData, getWeatherIcon, getDifficulty, formatDistance } from "@/utils/trailUtils";
+import { transformServerData } from "@/utils/trailUtils";
 
 // Mock data for initial implementation
 const mockTrails = [
@@ -127,6 +127,8 @@ const Index = () => {
       const { latitude, longitude } = position.coords;
       setCoordinates({ lat: latitude, lng: longitude });
 
+      console.log('Sending request with:', { latitude, longitude, description: searchQuery }); // Debug log
+
       const response = await fetch('https://bcbf-136-159-213-22.ngrok-free.app/locations', {
         method: 'POST',
         headers: {
@@ -144,7 +146,12 @@ const Index = () => {
       }
 
       const data = await response.json();
-      console.log("Server response:", data); // Add this line for debugging
+      console.log("Server response:", data); // Debug log
+      
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid response format from server');
+      }
+
       setServerResponse(data);
       toast.success("Found the best locations for you!");
     } catch (error) {
@@ -155,7 +162,9 @@ const Index = () => {
     }
   };
 
+  // Debug log for displayed trails
   const displayedTrails = serverResponse ? transformServerData(serverResponse) : mockTrails;
+  console.log('Final displayed trails:', displayedTrails);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-nature-50 to-white">
@@ -191,7 +200,7 @@ const Index = () => {
         <LeaveNoTraceTips />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayedTrails.map((trail) => (
+          {Array.isArray(displayedTrails) && displayedTrails.map((trail) => (
             <TrailCard key={trail.id} {...trail} />
           ))}
         </div>
