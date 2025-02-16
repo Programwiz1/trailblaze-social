@@ -16,43 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-// Mock data for initial implementation
-const mockTrails = [
-  {
-    id: "1",
-    name: "Emerald Lake Trail",
-    image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b",
-    difficulty: "moderate" as const,
-    rating: 4.8,
-    distance: 3.2,
-    time: "2h 30m",
-    status: "warning" as const,
-    alert: "Nesting season - partial closure"
-  },
-  {
-    id: "2",
-    name: "Crystal Mountain Peak",
-    image: "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5",
-    difficulty: "hard" as const,
-    rating: 4.9,
-    distance: 5.6,
-    time: "4h 15m",
-    status: "closed" as const,
-    alert: "Trail closed due to wildfire risk"
-  },
-  {
-    id: "3",
-    name: "Riverside Nature Walk",
-    image: "https://images.unsplash.com/photo-1501555088652-021faa106b9b",
-    difficulty: "easy" as const,
-    rating: 4.5,
-    distance: 1.8,
-    time: "1h 15m",
-    status: "open" as const,
-    alert: null
-  },
-];
+import { transformServerData } from "@/utils/trailUtils";
 
 const leaveNoTraceTips = [
   {
@@ -78,7 +42,7 @@ const Index = () => {
   const [transportMode, setTransportMode] = useState<string>("");
   const [isSearching, setIsSearching] = useState(false);
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
-  const [serverResponse, setServerResponse] = useState<Record<string, any> | null>(null);
+  const [trails, setTrails] = useState<any[]>([]);
   const [googleMapsKey, setGoogleMapsKey] = useState<string>("");
 
   // Fetch Google Maps API key from Supabase
@@ -147,7 +111,7 @@ const Index = () => {
     }
 
     setIsSearching(true);
-    setServerResponse(null);
+    setTrails([]);
 
     try {
       // Get current location
@@ -173,8 +137,13 @@ const Index = () => {
       }
 
       const data = await response.json();
-      setServerResponse(data);
-      toast.success("Recommendations received!");
+      console.log('Server response:', data);
+      
+      // Transform the server data into trail cards format
+      const transformedTrails = transformServerData(data);
+      setTrails(transformedTrails);
+      
+      toast.success("Found trails near you!");
     } catch (error) {
       console.error('Error:', error);
       toast.error("Something went wrong while processing your request");
@@ -182,15 +151,6 @@ const Index = () => {
       setIsSearching(false);
     }
   };
-
-  const filteredTrails = mockTrails.filter(trail => {
-    const searchTerms = searchQuery.toLowerCase();
-    return (
-      trail.name.toLowerCase().includes(searchTerms) ||
-      trail.difficulty.toLowerCase().includes(searchTerms) ||
-      trail.time.toLowerCase().includes(searchTerms)
-    );
-  });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-nature-50 to-white">
@@ -243,22 +203,6 @@ const Index = () => {
                 <div className="flex items-center justify-center gap-4">
                   <Loader2 className="h-6 w-6 animate-spin text-nature-600" />
                   <p className="text-nature-600">Searching for trails near you...</p>
-                </div>
-              </div>
-            )}
-
-            {serverResponse && !isSearching && (
-              <div className="mt-4 p-4 bg-white rounded-lg border border-nature-200">
-                <h3 className="font-semibold mb-2 text-nature-800">Server Response:</h3>
-                <div className="space-y-2">
-                  {Object.entries(serverResponse).map(([key, value]) => (
-                    <div key={key} className="flex gap-2">
-                      <span className="font-medium text-nature-600">{key}:</span>
-                      <span className="text-nature-800">
-                        {typeof value === 'object' ? JSON.stringify(value) : value}
-                      </span>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}
@@ -354,7 +298,7 @@ const Index = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTrails.map((trail) => (
+          {trails.map((trail) => (
             <TrailCard key={trail.id} {...trail} />
           ))}
         </div>
