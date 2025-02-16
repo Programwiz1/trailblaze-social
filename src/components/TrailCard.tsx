@@ -250,6 +250,39 @@ const TrailCard = ({
     }
   };
 
+  const handleRemoveCompletion = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    try {
+      const trailUUID = id.includes('-') ? id : 
+        '00000000-0000-0000-0000-' + id.padStart(12, '0');
+
+      const { error } = await supabase
+        .from('trail_completions')
+        .delete()
+        .eq('trail_id', trailUUID)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Trail uncompleted",
+        description: "Trail has been marked as incomplete",
+      });
+
+      // Refresh the page to show the updated status
+      window.location.reload();
+    } catch (error) {
+      console.error('Error removing trail completion:', error);
+      toast({
+        title: "Error",
+        description: "There was an error updating the trail status",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="group relative overflow-hidden rounded-lg bg-white shadow-md transition-all duration-300 hover:shadow-xl">
       <Link to={`/trail/${id}`} className="block">
@@ -311,85 +344,92 @@ const TrailCard = ({
             {isSaved ? "Saved" : "Save"}
           </Button>
 
-          <Dialog open={isCompleteDialogOpen} onOpenChange={setIsCompleteDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className={completed ? "bg-green-50 text-green-600" : ""}
-                disabled={completed}
-              >
-                <CheckCircle className={`h-4 w-4 mr-2 ${completed ? "fill-current" : ""}`} />
-                {completed ? "Completed" : "Mark as Complete"}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Complete Trail: {name}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Rating</label>
-                  <Select value={String(reviewRating)} onValueChange={(v) => setReviewRating(Number(v))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select rating" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[5, 4, 3, 2, 1].map((rating) => (
-                        <SelectItem key={rating} value={String(rating)}>
-                          {rating} {rating === 1 ? "star" : "stars"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Your Experience</label>
-                  <Textarea
-                    placeholder="Share your experience on this trail..."
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Difficulty Rating</label>
-                  <Select value={difficultyRating} onValueChange={(v) => setDifficultyRating(v as "easy" | "moderate" | "hard")}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select difficulty" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="easy">Easy</SelectItem>
-                      <SelectItem value="moderate">Moderate</SelectItem>
-                      <SelectItem value="hard">Hard</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Duration (minutes)</label>
-                  <Select value={String(durationMinutes)} onValueChange={(v) => setDurationMinutes(Number(v))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select duration" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="60">1 hour</SelectItem>
-                      <SelectItem value="120">2 hours</SelectItem>
-                      <SelectItem value="180">3 hours</SelectItem>
-                      <SelectItem value="240">4 hours</SelectItem>
-                      <SelectItem value="300">5 hours</SelectItem>
-                      <SelectItem value="360">6+ hours</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button onClick={handleCompleteTrail} className="w-full">
-                  Save Completion
+          {completed ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-green-50 text-green-600"
+              onClick={handleRemoveCompletion}
+            >
+              <CheckCircle className="h-4 w-4 mr-2 fill-current" />
+              Mark as Incomplete
+            </Button>
+          ) : (
+            <Dialog open={isCompleteDialogOpen} onOpenChange={setIsCompleteDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Mark as Complete
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Complete Trail: {name}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Rating</label>
+                    <Select value={String(reviewRating)} onValueChange={(v) => setReviewRating(Number(v))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select rating" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[5, 4, 3, 2, 1].map((rating) => (
+                          <SelectItem key={rating} value={String(rating)}>
+                            {rating} {rating === 1 ? "star" : "stars"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Your Experience</label>
+                    <Textarea
+                      placeholder="Share your experience on this trail..."
+                      value={reviewText}
+                      onChange={(e) => setReviewText(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Difficulty Rating</label>
+                    <Select value={difficultyRating} onValueChange={(v) => setDifficultyRating(v as "easy" | "moderate" | "hard")}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select difficulty" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="easy">Easy</SelectItem>
+                        <SelectItem value="moderate">Moderate</SelectItem>
+                        <SelectItem value="hard">Hard</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Duration (minutes)</label>
+                    <Select value={String(durationMinutes)} onValueChange={(v) => setDurationMinutes(Number(v))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select duration" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="60">1 hour</SelectItem>
+                        <SelectItem value="120">2 hours</SelectItem>
+                        <SelectItem value="180">3 hours</SelectItem>
+                        <SelectItem value="240">4 hours</SelectItem>
+                        <SelectItem value="300">5 hours</SelectItem>
+                        <SelectItem value="360">6+ hours</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button onClick={handleCompleteTrail} className="w-full">
+                    Save Completion
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
     </div>
