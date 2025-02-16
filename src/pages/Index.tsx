@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Search, Filter, Car, Bus, Trash, Footprints, AlertTriangle, AlertCircle, CloudRain, Flame } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -114,32 +113,31 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-nature-50 to-white">
       <Navbar />
       
       <main className="container mx-auto px-4 pt-24 pb-12">
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-nature-800 mb-4">
             Discover Your Next Adventure
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-nature-600 max-w-2xl mx-auto">
             Explore the most beautiful hiking trails and share your experiences with
             fellow adventurers.
           </p>
         </div>
 
-        {/* Weather and Trail Alerts Section */}
         {weatherAlerts.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">Active Alerts</h2>
+            <h2 className="text-xl font-semibold text-nature-800 mb-4">Active Alerts</h2>
             <div className="space-y-4">
               {weatherAlerts.map((alert) => (
                 <Alert key={alert.type} variant={alert.severity === "high" ? "destructive" : "default"}>
                   <alert.icon className="h-4 w-4" />
-                  <AlertTitle className="flex items-center gap-2">
+                  <AlertTitle className="flex items-center gap-2 text-nature-800">
                     {alert.title}
                   </AlertTitle>
-                  <AlertDescription>
+                  <AlertDescription className="text-nature-600">
                     <p>{alert.description}</p>
                     <p className="mt-2 text-sm font-medium">
                       Affected trails: {alert.affectedAreas.join(", ")}
@@ -151,9 +149,9 @@ const Index = () => {
           </div>
         )}
 
-        <Card className="mb-8">
+        <Card className="mb-8 bg-gradient-to-r from-nature-50 to-white border-nature-200">
           <CardHeader>
-            <CardTitle>Travel Impact Calculator</CardTitle>
+            <CardTitle className="text-nature-800">Travel Impact Calculator</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -223,30 +221,14 @@ const Index = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {leaveNoTraceTips.map((tip) => (
-            <Alert key={tip.title}>
-              <tip.icon className="h-4 w-4" />
-              <AlertTitle>{tip.title}</AlertTitle>
-              <AlertDescription>
+            <Alert key={tip.title} className="bg-nature-50 border-nature-200">
+              <tip.icon className="h-4 w-4 text-nature-600" />
+              <AlertTitle className="text-nature-800">{tip.title}</AlertTitle>
+              <AlertDescription className="text-nature-600">
                 {tip.description}
               </AlertDescription>
             </Alert>
           ))}
-        </div>
-
-        <div className="mb-8">
-          <div className="max-w-md mx-auto relative">
-            <input
-              type="text"
-              placeholder="Search trails..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-nature-500 pl-10"
-            />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <button className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <Filter className="text-gray-400 w-5 h-5 hover:text-nature-500 transition-colors" />
-            </button>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
