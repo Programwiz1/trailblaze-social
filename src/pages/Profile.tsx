@@ -14,7 +14,7 @@ interface CompletedTrail {
   review_text: string;
   difficulty_rating: "easy" | "moderate" | "hard";
   duration_minutes: number;
-  completed_at: string; // Changed from created_at to completed_at to match DB schema
+  completed_at: string;
 }
 
 interface SavedTrail {
@@ -41,7 +41,6 @@ const Profile = () => {
       if (!user) return;
 
       try {
-        // Fetch completed trails - changed order by to completed_at
         const { data: completedData, error: completedError } = await supabase
           .from('trail_completions')
           .select('*')
@@ -51,7 +50,6 @@ const Profile = () => {
         if (completedError) throw completedError;
         setCompletedTrails(completedData as CompletedTrail[] || []);
 
-        // Fetch saved trails
         const { data: savedData, error: savedError } = await supabase
           .from('saved_trails')
           .select('*')
@@ -86,20 +84,23 @@ const Profile = () => {
 
           <TabsContent value="completed">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {completedTrails.map((trail) => (
-                <TrailCard
-                  key={trail.id}
-                  id={trail.trail_id}
-                  name={savedTrails.find(st => st.trail_id === trail.trail_id)?.trail_name || "Mountain Vista Trail"}
-                  image={savedTrails.find(st => st.trail_id === trail.trail_id)?.trail_image || "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b"}
-                  difficulty={trail.difficulty_rating}
-                  rating={trail.rating}
-                  distance={savedTrails.find(st => st.trail_id === trail.trail_id)?.trail_distance || 2.5}
-                  time={`${Math.floor(trail.duration_minutes / 60)}h ${trail.duration_minutes % 60}m`}
-                  status="open"
-                  completed={true}
-                />
-              ))}
+              {completedTrails.map((trail) => {
+                const savedTrail = savedTrails.find(st => st.trail_id === trail.trail_id);
+                return (
+                  <TrailCard
+                    key={trail.id}
+                    id={trail.trail_id}
+                    name={savedTrail?.trail_name || "Unknown Trail"}
+                    image={savedTrail?.trail_image || "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b"}
+                    difficulty={trail.difficulty_rating}
+                    rating={trail.rating}
+                    distance={savedTrail?.trail_distance || 0}
+                    time={savedTrail?.trail_time || `${Math.floor(trail.duration_minutes / 60)}h ${trail.duration_minutes % 60}m`}
+                    status="open"
+                    completed={true}
+                  />
+                );
+              })}
             </div>
           </TabsContent>
 
