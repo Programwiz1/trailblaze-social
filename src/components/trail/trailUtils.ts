@@ -1,19 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
+import { validate as validateUUID } from 'uuid';
 
 export const getTrailUUID = (id: string) => {
-  // If the ID is already a UUID, return it as is
-  if (id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
-    return id;
-  }
-  // Otherwise, return null to indicate invalid ID
-  return null;
+  // Check if the ID is a valid UUID
+  return validateUUID(id) ? id : null;
 };
 
 export const checkTrailStatus = async (trailId: string, userId: string) => {
-  const trailUUID = getTrailUUID(trailId);
-  
-  // If the trail ID is not a valid UUID, return default values
-  if (!trailUUID) {
+  // Always return default values for invalid UUIDs
+  if (!validateUUID(trailId)) {
     return {
       isSaved: false,
       isCompleted: false
@@ -24,13 +19,13 @@ export const checkTrailStatus = async (trailId: string, userId: string) => {
     supabase
       .from('saved_trails')
       .select('id')
-      .eq('trail_id', trailUUID)
+      .eq('trail_id', trailId)
       .eq('user_id', userId)
       .maybeSingle(),
     supabase
       .from('trail_completions')
       .select('id')
-      .eq('trail_id', trailUUID)
+      .eq('trail_id', trailId)
       .eq('user_id', userId)
       .maybeSingle()
   ]);

@@ -15,7 +15,6 @@ export const getDifficulty = (popularityRank: number): "easy" | "moderate" | "ha
 };
 
 export const formatDistance = (distance: number): string => {
-  // Convert to hours and minutes for hiking time (assuming average walking speed)
   const walkingSpeed = 4; // km/h
   const totalHours = distance / walkingSpeed;
   const hours = Math.floor(totalHours);
@@ -50,8 +49,7 @@ export const transformServerData = (data: Array<[string, number, number, number]
   ];
 
   try {
-    const transformed = data.map((location, index) => {
-      // Ensure we have all required values
+    const transformed = data.map((location) => {
       const [name, weatherRank, popularityRank, distanceValue] = location;
       
       if (!name || typeof weatherRank !== 'number' || typeof popularityRank !== 'number' || typeof distanceValue !== 'number') {
@@ -59,10 +57,15 @@ export const transformServerData = (data: Array<[string, number, number, number]
         return null;
       }
 
+      // Generate a fixed UUID based on the trail name to maintain consistency
+      const trailNameHash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const seed = new Array(16).fill(0).map((_, i) => (trailNameHash + i) % 255);
+      const id = uuidv4({ random: seed });
+
       return {
-        id: uuidv4(), // Generate a proper UUID for each trail
+        id,
         name: name,
-        image: `https://images.unsplash.com/photo-${natureImages[index % natureImages.length]}`,
+        image: `https://images.unsplash.com/photo-${natureImages[trailNameHash % natureImages.length]}`,
         difficulty: getDifficulty(popularityRank),
         rating: Math.min(5, popularityRank * 5),
         distance: Number(distanceValue.toFixed(1)),
@@ -70,7 +73,7 @@ export const transformServerData = (data: Array<[string, number, number, number]
         status: weatherRank >= 10 ? "open" : weatherRank >= 8 ? "warning" : "closed",
         alert: weatherRank < 10 ? `Weather conditions: ${getWeatherIcon(weatherRank)}` : null
       };
-    }).filter(item => item !== null); // Remove any null items from invalid data
+    }).filter(item => item !== null);
 
     console.log('Transformed data:', transformed);
     return transformed;
