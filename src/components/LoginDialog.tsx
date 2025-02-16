@@ -38,11 +38,22 @@ export function LoginDialog({ open, onOpenChange, onSwitchToSignUp }: LoginDialo
       });
       onOpenChange(false);
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong",
-      });
+      console.error("Login error:", error);
+      
+      // Show a more user-friendly error message
+      if (error instanceof Error && error.message.includes("Invalid login credentials")) {
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: "Invalid email or password. If you haven't created an account yet, please sign up first.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error instanceof Error ? error.message : "Something went wrong during login",
+        });
+      }
     } finally {
       setLoading(false);
     }
