@@ -41,7 +41,7 @@ const mockPosts = [
       }
     ],
     timestamp: "3h ago",
-    type: "trail"
+    type: "trail" as const
   },
   {
     id: "2",
@@ -59,7 +59,7 @@ const mockPosts = [
       }
     ],
     timestamp: "5h ago",
-    type: "species",
+    type: "species" as const,
     speciesData: {
       name: "Red-tailed Hawk",
       scientificName: "Buteo jamaicensis",
@@ -99,10 +99,15 @@ const Social = () => {
   const identifySpecies = async (file: File) => {
     setIsIdentifying(true);
     try {
-      // Create an image element from the file
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-      await img.decode(); // Wait for the image to load
+      // Convert File to base64 string
+      const base64String = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          resolve(base64);
+        };
+        reader.readAsDataURL(file);
+      });
 
       // Initialize the image classification pipeline
       const classifier = await pipeline(
@@ -111,21 +116,23 @@ const Social = () => {
         { device: "webgpu" }
       );
 
-      // Classify the image
-      const results = await classifier(img);
+      // Classify the image using base64 string
+      const results = await classifier(base64String);
       
-      if (results && results.length > 0) {
+      if (Array.isArray(results) && results.length > 0) {
         const topResult = results[0];
-        setSpeciesReport(prev => ({
-          ...prev,
-          identifiedSpecies: topResult.label,
-          confidence: topResult.score
-        }));
+        if ('label' in topResult && 'score' in topResult) {
+          setSpeciesReport(prev => ({
+            ...prev,
+            identifiedSpecies: topResult.label,
+            confidence: topResult.score
+          }));
 
-        toast({
-          title: "Species Identified",
-          description: `We think this might be a ${topResult.label} (${(topResult.score * 100).toFixed(1)}% confidence)`,
-        });
+          toast({
+            title: "Species Identified",
+            description: `We think this might be a ${topResult.label} (${(topResult.score * 100).toFixed(1)}% confidence)`,
+          });
+        }
       }
     } catch (error) {
       console.error("Error identifying species:", error);
