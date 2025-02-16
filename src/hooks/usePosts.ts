@@ -29,8 +29,8 @@ export const usePosts = () => {
   const [posts, setPosts] = useState<Post[]>([]);
 
   const fetchPosts = async () => {
-    // Using a left join to get profile data even if some posts don't have matching profiles
-    const { data, error } = await supabase
+    // First fetch posts with likes and comments
+    const { data: postsData, error: postsError } = await supabase
       .from('posts')
       .select(`
         *,
@@ -40,32 +40,47 @@ export const usePosts = () => {
           content,
           user_id,
           created_at
-        ),
-        profile:profiles (
-          username,
-          avatar_url
         )
       `)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching posts:', error);
+    if (postsError) {
+      console.error('Error fetching posts:', postsError);
       return;
     }
 
-    if (data) {
-      // Transform and filter out posts with invalid profile data
-      const validPosts = data
-        .filter(post => post.profile && post.profile.username)
-        .map(post => ({
-          ...post,
-          profile: {
-            username: post.profile.username,
-            avatar_url: post.profile.avatar_url
-          }
-        }));
+    if (postsData) {
+      // Then fetch profiles for all user_ids
+      const userIds = postsData.map(post => post.user_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .in('id', userIds);
 
-      setPosts(validPosts as Post[]);
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        return;
+      }
+
+      // Create a map of user_id to profile data
+      const profileMap = profilesData?.reduce((acc, profile) => ({
+        ...acc,
+        [profile.id]: profile
+      }), {}) || {};
+
+      // Combine posts with their profile data
+      const postsWithProfiles = postsData.map(post => ({
+        ...post,
+        profile: profileMap[post.user_id] ? {
+          username: profileMap[post.user_id].username,
+          avatar_url: profileMap[post.user_id].avatar_url
+        } : {
+          username: 'Unknown User',
+          avatar_url: null
+        }
+      }));
+
+      setPosts(postsWithProfiles as Post[]);
     }
   };
 
