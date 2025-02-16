@@ -145,15 +145,16 @@ const SocialPost = ({
           content: newComment
         }])
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!comment) throw new Error('Failed to create comment');
 
       const { data: profile } = await supabase
         .from('profiles')
         .select('username')
         .eq('id', currentUser.id)
-        .single();
+        .maybeSingle();
 
       if (profile) {
         setCommentUsernames(prev => ({
