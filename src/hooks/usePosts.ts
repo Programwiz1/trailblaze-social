@@ -52,7 +52,17 @@ export const usePosts = () => {
       return;
     }
 
-    setPosts(data as Post[]);
+    if (data) {
+      // Filter out any posts where profile data might be missing
+      const validPosts = data.filter((post): post is Post => {
+        return post.profile && 
+               typeof post.profile === 'object' && 
+               'username' in post.profile && 
+               'avatar_url' in post.profile;
+      });
+      
+      setPosts(validPosts);
+    }
   };
 
   useEffect(() => {
