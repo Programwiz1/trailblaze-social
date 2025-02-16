@@ -24,6 +24,25 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+// Mock IUCN data for demonstration
+const iucnData: Record<string, { status: string; description: string; color: string }> = {
+  "Red-tailed Hawk": {
+    status: "Least Concern",
+    description: "Population stable and widespread",
+    color: "bg-green-100"
+  },
+  "Golden Eagle": {
+    status: "Near Threatened",
+    description: "Population declining due to habitat loss",
+    color: "bg-yellow-100"
+  },
+  "California Condor": {
+    status: "Critically Endangered",
+    description: "Extremely low population, intensive conservation efforts ongoing",
+    color: "bg-red-100"
+  }
+};
+
 const ecoFacts = [
   {
     title: "Climate Impact on Local Birds",
@@ -110,7 +129,12 @@ const mockPosts = [
       scientificName: "Buteo jamaicensis",
       location: "Crystal Mountain Peak",
       time: "7:30 AM",
-      confidence: 0.92
+      confidence: 0.92,
+      conservationStatus: {
+        status: "Least Concern",
+        description: "Population stable and widespread",
+        color: "bg-green-100"
+      }
     }
   }
 ];
@@ -121,6 +145,11 @@ interface SpeciesReport {
   notes: string;
   identifiedSpecies?: string;
   confidence?: number;
+  conservationStatus?: {
+    status: string;
+    description: string;
+    color: string;
+  };
 }
 
 const Social = () => {
@@ -167,10 +196,18 @@ const Social = () => {
       if (Array.isArray(results) && results.length > 0) {
         const topResult = results[0];
         if ('label' in topResult && 'score' in topResult) {
+          // Get conservation status from mock IUCN data
+          const conservationStatus = iucnData[topResult.label] || {
+            status: "Unknown",
+            description: "Conservation status not available",
+            color: "bg-gray-100"
+          };
+
           setSpeciesReport(prev => ({
             ...prev,
             identifiedSpecies: topResult.label,
-            confidence: topResult.score
+            confidence: topResult.score,
+            conservationStatus
           }));
 
           toast({
@@ -216,6 +253,95 @@ const Social = () => {
           <p className="text-gray-600 mb-6">
             Share your hiking adventures and help document local wildlife
           </p>
+
+          <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="mb-8">
+                <PlusCircle className="w-4 h-4 mr-2" />
+                Report Species Sighting
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Report Wildlife Sighting</DialogTitle>
+                <DialogDescription>
+                  Help us track and protect local wildlife by reporting your sightings.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <form onSubmit={handleSubmitReport} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Photo</Label>
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center">
+                    {speciesReport.image ? (
+                      <div className="relative">
+                        <img
+                          src={URL.createObjectURL(speciesReport.image)}
+                          alt="Species preview"
+                          className="max-h-48 mx-auto rounded"
+                        />
+                        {speciesReport.identifiedSpecies && (
+                          <div className={`mt-2 p-3 rounded-lg ${speciesReport.conservationStatus?.color || 'bg-gray-100'}`}>
+                            <div className="text-sm font-medium">
+                              Identified as: {speciesReport.identifiedSpecies}
+                              <br />
+                              Confidence: {(speciesReport.confidence! * 100).toFixed(1)}%
+                            </div>
+                            {speciesReport.conservationStatus && (
+                              <div className="mt-2 text-sm">
+                                <div className="font-medium">Conservation Status: {speciesReport.conservationStatus.status}</div>
+                                <div className="text-gray-600">{speciesReport.conservationStatus.description}</div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-gray-500">
+                        <Camera className="w-8 h-8 mx-auto mb-2" />
+                        <p>Upload a photo for AI identification</p>
+                      </div>
+                    )}
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="mt-2"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Location</Label>
+                  <Input
+                    placeholder="e.g., North Ridge Trail, mile marker 3"
+                    value={speciesReport.location}
+                    onChange={e => setSpeciesReport(prev => ({ ...prev, location: e.target.value }))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Notes</Label>
+                  <Textarea
+                    placeholder="Add any additional observations..."
+                    value={speciesReport.notes}
+                    onChange={e => setSpeciesReport(prev => ({ ...prev, notes: e.target.value }))}
+                  />
+                </div>
+
+                <Button type="submit" className="w-full" disabled={isIdentifying}>
+                  {isIdentifying ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Identifying Species...
+                    </>
+                  ) : (
+                    "Submit Report"
+                  )}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
           
           {/* Eco Facts Section */}
           <div className="mb-8">
@@ -271,81 +397,6 @@ const Social = () => {
               ))}
             </div>
           </div>
-
-          <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Report Wildlife Sighting</DialogTitle>
-                <DialogDescription>
-                  Help us track and protect local wildlife by reporting your sightings.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <form onSubmit={handleSubmitReport} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Photo</Label>
-                  <div className="border-2 border-dashed rounded-lg p-4 text-center">
-                    {speciesReport.image ? (
-                      <div className="relative">
-                        <img
-                          src={URL.createObjectURL(speciesReport.image)}
-                          alt="Species preview"
-                          className="max-h-48 mx-auto rounded"
-                        />
-                        {speciesReport.identifiedSpecies && (
-                          <div className="mt-2 text-sm text-gray-600">
-                            Identified as: {speciesReport.identifiedSpecies}
-                            <br />
-                            Confidence: {(speciesReport.confidence! * 100).toFixed(1)}%
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-gray-500">
-                        <Camera className="w-8 h-8 mx-auto mb-2" />
-                        <p>Upload a photo for AI identification</p>
-                      </div>
-                    )}
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="mt-2"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Location</Label>
-                  <Input
-                    placeholder="e.g., North Ridge Trail, mile marker 3"
-                    value={speciesReport.location}
-                    onChange={e => setSpeciesReport(prev => ({ ...prev, location: e.target.value }))}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Notes</Label>
-                  <Textarea
-                    placeholder="Add any additional observations..."
-                    value={speciesReport.notes}
-                    onChange={e => setSpeciesReport(prev => ({ ...prev, notes: e.target.value }))}
-                  />
-                </div>
-
-                <Button type="submit" className="w-full" disabled={isIdentifying}>
-                  {isIdentifying ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Identifying Species...
-                    </>
-                  ) : (
-                    "Submit Report"
-                  )}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
         </div>
 
         <div className="space-y-6">
