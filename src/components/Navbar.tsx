@@ -1,6 +1,6 @@
 
 import { Link, useLocation } from "react-router-dom";
-import { Motion, Mountain, Heart, Search } from "lucide-react";
+import { Compass, Mountain, Heart, Search } from "lucide-react";
 
 const Navbar = () => {
   const location = useLocation();
@@ -22,7 +22,7 @@ const Navbar = () => {
                 isActive("/") ? "text-nature-600" : "text-gray-600 hover:text-nature-500"
               }`}
             >
-              <Motion className="w-4 h-4" />
+              <Compass className="w-4 h-4" />
               <span>Explore</span>
             </Link>
             
