@@ -18,7 +18,12 @@ export const formatDistance = (distance: number): string => {
   return `${hours}h ${minutes}m`;
 };
 
-export const transformServerData = (data: [string, number, number, number][]) => {
+export const transformServerData = (data: [string, number, number, number][] | null) => {
+  if (!data || !Array.isArray(data)) {
+    console.warn('Invalid or missing data received from server');
+    return [];
+  }
+
   return data.map((location, index) => ({
     id: `server-${index}`,
     name: location[0],
