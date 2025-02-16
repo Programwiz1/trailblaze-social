@@ -2,211 +2,133 @@ import { useState } from "react";
 import { PlusCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import SocialPost from "@/components/SocialPost";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
-import { pipeline } from "@huggingface/transformers";
+import { Button } from "@/components/ui/button";
 import { SpeciesReportDialog } from "@/components/SpeciesReportDialog";
 import { EcoFactsSection } from "@/components/EcoFactsSection";
 import { ConservationEventsSection } from "@/components/ConservationEventsSection";
 
-// Mock IUCN data for demonstration
-const iucnData: Record<string, { status: string; description: string; color: string }> = {
-  "Red-tailed Hawk": {
-    status: "Least Concern",
-    description: "Population stable and widespread",
-    color: "bg-green-100"
-  },
-  "Golden Eagle": {
-    status: "Near Threatened",
-    description: "Population declining due to habitat loss",
-    color: "bg-yellow-100"
-  },
-  "California Condor": {
-    status: "Critically Endangered",
-    description: "Extremely low population, intensive conservation efforts ongoing",
-    color: "bg-red-100"
-  }
-};
+interface Comment {
+  id: string;
+  user: string;
+  content: string;
+  timestamp: string;
+}
+
+interface SocialPostProps {
+  id: string;
+  user: string;
+  userAvatar?: string;
+  image: string;
+  caption: string;
+  likes: number;
+  comments: Comment[];
+  timestamp: string;
+  type?: "trail" | "species";
+  speciesData?: SpeciesData;
+}
+
+interface SpeciesData {
+  name: string;
+  scientificName: string;
+  location: string;
+  time: string;
+  confidence: number;
+}
 
 const mockPosts = [
   {
     id: "1",
-    user: "Sarah Hiker",
-    userAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
-    image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b",
-    caption: "Just completed the Emerald Lake Trail! The views were absolutely breathtaking 🏔️ #hiking #nature #adventure",
-    likes: 124,
+    user: "John Hikes",
+    userAvatar: "https://images.unsplash.com/photo-1503023345310-154ca6123c14?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8aHVtYW58ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60",
+    image: "https://images.unsplash.com/photo-15188398e99c9-e69e52ddca27?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTB8fG1vdW50YWlufGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=500&q=60",
+    caption: "Amazing hike at Emerald Lake! The views were breathtaking.",
+    likes: 32,
     comments: [
-      {
-        id: "c1",
-        user: "John",
-        content: "Amazing view! Which trail is this?",
-        timestamp: "2h ago"
-      },
-      {
-        id: "c2",
-        user: "Lisa",
-        content: "Love this spot! The lake is so crystal clear.",
-        timestamp: "1h ago"
-      }
+      { id: "1", user: "Jane Doe", content: "Looks beautiful!", timestamp: "2 hours ago" },
+      { id: "2", user: "Peter Pan", content: "I need to visit this place.", timestamp: "1 hour ago" }
     ],
-    timestamp: "3h ago",
-    type: "trail" as const
+    timestamp: "3 hours ago"
   },
   {
     id: "2",
-    user: "Mike Adventure",
-    userAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
-    image: "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5",
-    caption: "Spotted this beautiful Red-tailed Hawk on Crystal Mountain Peak! 🦅 #wildlife #birdwatching",
-    likes: 89,
+    user: "Wildlife Watcher",
+    userAvatar: "https://images.unsplash.com/photo-1534528741702-a0cfa97013ca?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8M3x8aHVtYW58ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60",
+    image: "https://images.unsplash.com/photo-1543326872-193f29a3924f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NXx8d2lsZGxpZmV8ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60",
+    caption: "Spotted a rare Blue Jay on the trail today! #wildlife #birdwatching",
+    likes: 57,
     comments: [
-      {
-        id: "c3",
-        user: "Emma",
-        content: "What a magnificent bird!",
-        timestamp: "30m ago"
-      }
+      { id: "3", user: "EcoFriend", content: "Great sighting!", timestamp: "4 hours ago" }
     ],
-    timestamp: "5h ago",
-    type: "species" as const,
+    timestamp: "5 hours ago",
+    type: "species",
     speciesData: {
-      name: "Red-tailed Hawk",
-      scientificName: "Buteo jamaicensis",
-      location: "Crystal Mountain Peak",
-      time: "7:30 AM",
-      confidence: 0.92,
-      conservationStatus: {
-        status: "Least Concern",
-        description: "Population stable and widespread",
-        color: "bg-green-100"
-      }
+      name: "Blue Jay",
+      scientificName: "Cyanocitta cristata",
+      location: "North Ridge Trail",
+      time: "11:30 AM",
+      confidence: 0.85
     }
   }
 ];
 
-interface SpeciesReport {
-  image: File | null;
-  location: string;
-  notes: string;
-  identifiedSpecies?: string;
-  confidence?: number;
-  conservationStatus?: {
-    status: string;
-    description: string;
-    color: string;
-  };
-}
-
 const Social = () => {
-  const [isIdentifying, setIsIdentifying] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [speciesReport, setSpeciesReport] = useState<SpeciesReport>({
+  const [speciesReport, setSpeciesReport] = useState({
     image: null,
     location: "",
-    notes: ""
+    notes: "",
+    identifiedSpecies: undefined,
+    confidence: undefined,
+    conservationStatus: undefined,
   });
-  const { toast } = useToast();
+  const [isIdentifying, setIsIdentifying] = useState(false);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setSpeciesReport(prev => ({ ...prev, image: file }));
-      identifySpecies(file);
     }
   };
 
-  const identifySpecies = async (file: File) => {
-    setIsIdentifying(true);
-    try {
-      // Convert File to base64 string
-      const base64String = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64 = reader.result as string;
-          resolve(base64);
-        };
-        reader.readAsDataURL(file);
-      });
-
-      // Initialize the image classification pipeline
-      const classifier = await pipeline(
-        "image-classification",
-        "onnx-community/mobilenetv4_conv_small.e2400_r224_in1k",
-        { device: "webgpu" }
-      );
-
-      // Classify the image using base64 string
-      const results = await classifier(base64String);
-      
-      if (Array.isArray(results) && results.length > 0) {
-        const topResult = results[0];
-        if ('label' in topResult && 'score' in topResult) {
-          // Get conservation status from mock IUCN data
-          const conservationStatus = iucnData[topResult.label] || {
-            status: "Unknown",
-            description: "Conservation status not available",
-            color: "bg-gray-100"
-          };
-
-          setSpeciesReport(prev => ({
-            ...prev,
-            identifiedSpecies: topResult.label,
-            confidence: topResult.score,
-            conservationStatus
-          }));
-
-          toast({
-            title: "Species Identified",
-            description: `We think this might be a ${topResult.label} (${(topResult.score * 100).toFixed(1)}% confidence)`,
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error identifying species:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to identify species. Please try again.",
-      });
-    } finally {
-      setIsIdentifying(false);
-    }
-  };
-
-  const handleSubmitReport = (e: React.FormEvent) => {
+  const handleSubmitReport = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the report to your backend
-    toast({
-      title: "Report Submitted",
-      description: "Thank you for contributing to our wildlife database!",
-    });
-    setReportDialogOpen(false);
-    setSpeciesReport({
-      image: null,
-      location: "",
-      notes: ""
-    });
+    setIsIdentifying(true);
+
+    // Simulate species identification (replace with actual API call)
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    setSpeciesReport(prev => ({
+      ...prev,
+      identifiedSpecies: "Monarch Butterfly",
+      confidence: 0.95,
+      conservationStatus: {
+        status: "Near Threatened",
+        description: "Monarch populations have declined due to habitat loss.",
+        color: "bg-yellow-100"
+      }
+    }));
+
+    setIsIdentifying(false);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-nature-50 to-white">
       <Navbar />
       
       <main className="container mx-auto px-4 pt-24 pb-12 max-w-4xl">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Trail Community</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="text-4xl font-bold text-nature-800 mb-4">Trail Community</h1>
+          <p className="text-nature-600 mb-6">
             Share your hiking adventures and help document local wildlife
           </p>
 
           <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="mb-8">
+              <Button className="mb-8 bg-nature-600 hover:bg-nature-700 text-white">
                 <PlusCircle className="w-4 h-4 mr-2" />
                 Report Species Sighting
               </Button>

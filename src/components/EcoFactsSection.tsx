@@ -28,18 +28,18 @@ const ecoFacts = [
 export function EcoFactsSection() {
   return (
     <div className="mb-8">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Today's Eco Facts</h2>
+      <h2 className="text-2xl font-semibold text-nature-700 mb-4">Today's Eco Facts</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {ecoFacts.map((fact, index) => (
-          <Card key={index} className="bg-green-50">
+          <Card key={index} className="bg-nature-50 border-nature-200 hover:shadow-lg transition-shadow duration-300">
             <CardHeader className="space-y-1">
               <div className="flex items-center space-x-2">
-                <fact.icon className="w-5 h-5 text-green-600" />
-                <CardTitle className="text-lg text-green-800">{fact.title}</CardTitle>
+                <fact.icon className="w-5 h-5 text-nature-600" />
+                <CardTitle className="text-lg text-nature-800">{fact.title}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-green-700">{fact.description}</p>
+              <p className="text-sm text-nature-700">{fact.description}</p>
             </CardContent>
           </Card>
         ))}
